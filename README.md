@@ -1,8 +1,8 @@
 PHP 最佳实践（译）
 ============
 
-原文： [PHP Best Practices-A short, practical guide for common and confusing PHP tasks](https://phpbestpractices.org/)
+原文： [PHP Best Practices-A short, practical guide for common and confusing PHP tasks](https://phpbestpractices.org)
 
 译者：[youngsterxyf](https://github.com/youngsterxyf)
 
-[开始阅读](http://justjavac.com/PHP-Best-Practices-zh_CN/)
+[开始阅读](http://phpbestpractices.justjavac.com)
