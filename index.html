@@ -1,0 +1,895 @@
+<!doctype html>
+<html>
+<head>
+<title>PHP 最佳实践: a short, practical guide for common and confusing PHP tasks</title>
+<meta charset="utf-8" />
+<link type="text/css" rel="stylesheet" href="css/core.css" media="screen" />
+<script type="text/javascript" src="js/jquery/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="js/jquery/jquery.smooth-scroll-1.4.5.min.js"></script>
+<script type="text/javascript">
+			$(document).ready(function(){
+				$('a').smoothScroll();
+
+				$(window).scroll(function(){
+					UpdateToc();
+				});
+
+				// For some reason, without a timeout this doesn't set the right toc entry on load.
+				// Timeout fixes this.  Must be a page layout timing issue.
+				setTimeout(function(){ UpdateToc(); }, 500);
+			});
+
+			function UpdateToc(){
+				var windowTop = $(window).scrollTop();
+				var closestSectionId = '';
+				var closestSectionTop = 0;
+
+				$('section').each(function(){
+					if($(this).offset().top > closestSectionTop && $(this).offset().top <= windowTop + 40){
+						closestSectionTop =  $(this).offset().top;
+						closestSectionId = $(this).attr('id');
+					}
+				});
+
+				$('nav a').removeClass('highlighted');
+				$('nav a[href$="' + closestSectionId + '"]').addClass("highlighted");
+
+				if(windowTop > $('nav').offset().top)
+					$("nav").addClass("sticky");
+
+				if(windowTop < 130)
+					$("nav").removeClass("sticky");
+			}
+		</script>
+</head>
+<body>
+<h1>PHP 最佳实践（译）<span>A short, practical guide for common and confusing PHP tasks</span></h1>
+<nav>
+  <ol>
+    <li><a href="#maintainers">最后修订日期 &amp; 维护者</a></li>
+    <li><a href="#introduction">简介</a></li>
+    <li><a href="#version">我们在使用哪个版本的 PHP？</a></li>
+    <li><a href="#passwords">存储密码</a></li>
+    <li><a href="#mysql">PHP 与 MySQL</a></li>
+    <li><a href="#php-tags">PHP 标签</a></li>
+    <li><a href="#auto-loading">自动加载类</a></li>
+    <li><a href="#quotes">单引号和双引号</a></li>
+    <li><a href="#constants">define() 与 const</a></li>
+    <li><a href="#opcode-cache">缓存 PHP opcode</a></li>
+    <li><a href="#memcached">PHP 与 Memcached</a></li>
+    <li><a href="#regex">PHP 与正则表达式</a></li>
+    <li><a href="#serving-php">Web 服务器 与 PHP</a></li>
+    <li><a href="#email">发送邮件</a></li>
+    <li><a href="#validating-emails">验证邮件地址</a></li>
+    <li><a href="#sanitizing-html">净化 HTML 输入和输出</a></li>
+    <li><a href="#utf-8">PHP 与 UTF-8</a></li>
+    <li><a href="#working-with-dates-and-times">处理日期和时间</a></li>
+    <li><a href="#checking-for-null">检测一个值是否为 null 或 false</a></li>
+    <li><a href="#suggestions">建议与指正</a></li>
+  </ol>
+</nav>
+<article>
+  <section id="maintainers">
+    <h2>最后修订日期 &amp; 维护者</h2>
+    <p>由我，<a href="https://alexcabal.com/">Alex Cabal</a>，维护该文档。
+      我编写 PHP 程序已有很长一段时间了，当前我经营着 <a href="http://www.scribophile.com/">Scribophile，由认真作家组成的一个在线写作团体</a>, 
+      <a href="http://writerfolio.com/">Writerfolio，为自由职业者提供的一个易用写作工具集</a>，以及 <a href="https://standardebooks.com">Standard Ebooks，一个图文并茂、无数字版权管理的公共领域电子书出版商</a>。
+      有时我是个为吸引我的项目或客户而工作的自由职业者。</p>
+    <p>如果你认为我在某些事情上能够帮到你，或者对本文档有点建议或纠正存在的错误，<a href="https://alexcabal.com/contact/">请给我写封邮件</a>。
+    </p>
+  </section>
+  <section id="introduction">
+    <h2>简介</h2>
+    <p>PHP 是一门复杂的语言，经过多年折腾，使其不同版本之间高度不一致，有时还有些 bug。
+      每个版本都有自己独有的特性、多余和怪异之处，也很难跟踪哪个版本有哪些问题。
+      这也就很好理解为什么有时它会遭到那么多的厌恶。</p>
+
+    <p>尽管如此，如今它还是 Web 开发方面最流行的语言。
+      因其悠久的历史，对于实现密码哈希和数据库访问诸如此类的基本任务你能够找到很多教程。
+      但问题在于，5 个教程，你就很有可能找到 5 种完全不同的完成任务的方式，那么哪种是“正确”的方式呢？
+      其他方式有难以捉摸的 bug 或者陷阱？
+      确实很难搞明白，所以你经常要在互联网上反复查找尝试确认正确的答案。</p>
+
+    <p>这也是 PHP 编程新手频繁地因为丑陋、过时、或不安全的代码而遭到责备的原因之一。
+      如果 Google 搜索的第一个结果是一篇 4 年前的文章，讲述一种 5 年前的方法，那么 PHP 新手们也就很难改变经常遭受责备的现状。</p>
+
+    <p>本文档通过为 PHP 中常见的令人困惑的问题和任务编辑组织一系列被认为最佳实践的基本做法，
+      来尝试解决上述问题。
+      若一个低层次的任务在PHP中有多种令人困惑的实现方式，本文也会涵盖。</p>
+
+    <h4>是什么</h4>
+    <p>这是一份指南，在 PHP 程序员遇到一些常见低层次任务但不明确最佳做法（由于 PHP 可能提供了多种解决方案）之时，为其建议最佳实践。
+      例如：连接数据库是一个常见任务，PHP 中提供了大量可行的方案，但并不是所有的都是好的做法，因此，本文也会包含该问题。</p>
+    <p>本文包含的是一系列简短的、入门性质的方案。
+      涉及的示例在基本设定下就能够运行起来，你研究一下应该就能把它们变为对你有用的东西。</p>
+
+    <p>本文将指出一些我们认为是 PHP 中最新最好的东西。然而，这意味如果你在使用老版本的 PHP，
+      一些用来实现这些解决方案的特性对你并不可用。</p>
+
+    <p>这份文档会一直更新，我会尽我最大努力保持该文档与PHP的发展同步。</p>
+
+    <h4><strong>不</strong>是什么</h4>
+    <p>本文档不是一份 PHP 教程。你应该在别处学习语言基础和语法。</p>
+    <p>它也不是一份针对 web 应用常见问题，如 cookie 存储、缓存、编程风格、文档等的指南。</p>
+    <p>它也不是一个安全指南。当本文档触碰到一些安全相关的问题时，也是希望你自己做些研究来确保你的 PHP 应用的安全问题。
+      你的代码造成的问题应该都是自己的过错。</p>
+    <p>该文档也并不是在主张一种特定的编程风格、模式或者框架。</p>
+    <p>也不是在主张一种特定的方式来完成高层次任务如用户注册、登录系统等。
+      本文档只限于 PHP 的悠久历史所造成的一些易混淆或不明确的低层次任务。</p>
+    <p>它不是一个一劳永逸的解决方案，也不是一个唯一的方案。
+      下面要讲述的一些方法对于你的特定场景来说也许并不是最好的，存在很多不同的方式来达到同样的目的。
+      特别是，高负载 web 应用也许能从更加难懂的方案中获益更多。</p>
+  </section>
+  <section id="version">
+    <h2>我们在使用哪个版本的 PHP？</h2>
+    <h3>带 Suhosin-Patch 的 PHP 5.3.10-1ubuntu3.6，安装在 Ubuntu 12.04 LTS 上。</h3>
+    <p>PHP 是 Web 世界里的百年老龟，它的壳上铭刻着一段丰富、复杂、而粗糙的历史。
+      在一个共享主机的环境里，它的配置可能会限制你能做的事情。</p>
+    <p>为了保持清晰地叙述，我们将仅针对一个版本的 PHP 进行讲述。
+      在 2013 年 4 月 30 日时，该版本为 <strong>PHP 5.3.10-1ubuntu3.6 with Suhosin-Patch</strong>。
+      若你在 <strong>Ubuntu 12.04 LTS</strong> 服务器上使用 apt-get 进行安装的就是该版本的 PHP。</p>
+    <p>你也许发现这些方案中的一些在其他或者更老版本的 PHP 上也能工作。
+      如果是这样的话，就 <strong>由你来研究在这些更老版本上潜在的难以捉摸的 bug 或安全问题</strong>。</p>
+  </section>
+  <section id="passwords">
+    <h2>存储密码</h2>
+    <h3>使用<a href="http://www.openwall.com/phpass/">phpass</a>库来哈希和比较密码</h3>
+    <p><strong>经 phpass 0.3 测试</strong>，在存入数据库之前进行哈希保护用户密码的标准方式。
+      许多常用的哈希算法如 md5，甚至是 sha1 对于密码存储都是不安全的，
+      因为<a href="http://arstechnica.com/security/2013/05/how-crackers-make-minced-meat-out-of-your-passwords/">骇客能够使用那些算法轻而易举地破解密码</a>。</p>
+    <p>对密码进行哈希最安全的方法是使用 bcrypt 算法。开源的 phpass 库以一个易于使用的类来提供该功能。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">// Include the phpass library</span>
+<span class="k">require_once</span><span class="p">(</span><span class="s1">'phpass-03/PasswordHash.php'</span><span class="p">)</span>
+
+<span class="c1">// Initialize the hasher without portable hashes (this is more secure)</span>
+<span class="nv">$hasher</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PasswordHash</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+
+<span class="c1">// Hash the password. $hashedPassword will be a 60-character string.</span>
+<span class="nv">$hashedPassword</span> <span class="o">=</span> <span class="nv">$hasher</span><span class="o">-&gt;</span><span class="na">HashPassword</span><span class="p">(</span><span class="s1">'my super cool password'</span><span class="p">);</span>
+
+<span class="c1">// You can now safely store the contents of $hashedPassword in your database!</span>
+
+<span class="c1">// Check if a user has provided the correct password by comparing what they</span>
+<span class="c1">// typed with our hash</span>
+<span class="nv">$hasher</span><span class="o">-&gt;</span><span class="na">CheckPassword</span><span class="p">(</span><span class="s1">'the wrong password'</span><span class="p">,</span> <span class="nv">$hashedPassword</span><span class="p">);</span>  <span class="c1">// false</span>
+
+<span class="nv">$hasher</span><span class="o">-&gt;</span><span class="na">CheckPassword</span><span class="p">(</span><span class="s1">'my super cool password'</span><span class="p">,</span> <span class="nv">$hashedPassword</span><span class="p">);</span>  <span class="c1">// true</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <h4>陷阱</h4>
+    <ul>
+      <li>许多资源可能推荐你在哈希之前对你的密码“加盐”。想法很好，但 phpass 在 HashPassword() 函数中已经对你的密码“加盐”了，这意味着你不需要自己“加盐”。</li>
+    </ul>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://www.openwall.com/phpass/">phpass</a></li>
+      <li><a href="http://blogs.msdn.com/b/lixiong/archive/2011/12/25/md5-sha1-salt-and-bcrypt.aspx">为什么使用 md5 或 sha 哈希密码是不安全的</a></li>
+      <li><a href="http://codahale.com/how-to-safely-store-a-password/">怎样安全地存储密码</a></li>
+    </ul>
+  </section>
+  <section id="mysql">
+    <h2>PHP 与 MySQL</h2>
+    <h3>使用 <a href="http://php.net/manual/zh/book.pdo.php">PDO</a> 及其预处理语句功能。</h3>
+    <p>在 PHP 中，有很多方式来连接到一个 MySQL 数据库。PDO（PHP 数据对象）是其中最新且最健壮的一种。
+      PDO 跨多种不同类型数据库有一个一致的接口，使用面向对象的方式，支持更多的新数据库支持的特性。</p>
+    <p>你应该使用 PDO 的预处理语句函数来帮助防范 SQL 注入攻击。
+      使用函数 <a href="http://php.net/manual/zh/pdostatement.bindvalue.php">bindValue</a> 来确保你的 SQL 免于一级 SQL 注入攻击。
+      （虽然并不是 100% 安全的，查看进一步阅读获取更多细节。）
+      在以前，这必须使用一些“魔术引号(magic quotes)”函数的组合来实现。PDO 使得那堆东西不再需要。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">try</span><span class="p">{</span>
+    <span class="c1">// Create a new connection.</span>
+    <span class="c1">// You'll probably want to replace hostname with localhost in the first parameter.</span>
+    <span class="c1">// The PDO options we pass do the following:</span>
+    <span class="c1">// \PDO::ATTR_ERRMODE enables exceptions for errors.  This is optional but can be handy.</span>
+    <span class="c1">// \PDO::ATTR_PERSISTENT disables persistent connections, which can cause concurrency issues in certain cases.  See "Gotchas".</span>
+    <span class="c1">// \PDO::MYSQL_ATTR_INIT_COMMAND alerts the connection that we'll be passing UTF-8 data.</span>
+    <span class="c1">// This may not be required depending on your configuration, but it'll save you headaches down the road</span>
+    <span class="c1">// if you're trying to store Unicode strings in your database.  See "Gotchas".</span>
+    <span class="nv">$link</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">\PDO</span><span class="p">(</span>   <span class="s1">'mysql:host=your-hostname;dbname=your-db'</span><span class="p">,</span> 
+                        <span class="s1">'your-username'</span><span class="p">,</span> 
+                        <span class="s1">'your-password'</span><span class="p">,</span> 
+                        <span class="k">array</span><span class="p">(</span>
+                            <span class="nx">\PDO</span><span class="o">::</span><span class="na">ATTR_ERRMODE</span> <span class="o">=&gt;</span> <span class="nx">\PDO</span><span class="o">::</span><span class="na">ERRMODE_EXCEPTION</span><span class="p">,</span> 
+                            <span class="nx">\PDO</span><span class="o">::</span><span class="na">ATTR_PERSISTENT</span> <span class="o">=&gt;</span> <span class="k">false</span><span class="p">,</span> 
+                            <span class="nx">\PDO</span><span class="o">::</span><span class="na">MYSQL_ATTR_INIT_COMMAND</span> <span class="o">=&gt;</span> <span class="s1">'set names utf8mb4'</span>
+                        <span class="p">)</span>
+                    <span class="p">);</span>
+
+    <span class="nv">$handle</span> <span class="o">=</span> <span class="nv">$link</span><span class="o">-&gt;</span><span class="na">prepare</span><span class="p">(</span><span class="s1">'select Username from Users where UserId = ? or Username = ? limit ?'</span><span class="p">);</span>
+
+    <span class="c1">// PHP bug: if you don't specify PDO::PARAM_INT, PDO may enclose the argument in quotes.</span>
+    <span class="c1">// This can mess up some MySQL queries that don't expect integers to be quoted.</span>
+    <span class="c1">// See: https://bugs.php.net/bug.php?id=44639</span>
+    <span class="c1">// If you're not sure whether the value you're passing is an integer, use the is_int() function.</span>
+    <span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">bindValue</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nx">PDO</span><span class="o">::</span><span class="na">PARAM_INT</span><span class="p">);</span>
+    <span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">bindValue</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">'Bilbo Baggins'</span><span class="p">);</span>
+    <span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">bindValue</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="nx">PDO</span><span class="o">::</span><span class="na">PARAM_INT</span><span class="p">);</span>
+
+    <span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">execute</span><span class="p">();</span>
+
+    <span class="c1">// Using the fetchAll() method might be too resource-heavy if you're selecting a truly massive amount of rows.</span>
+    <span class="c1">// If that's the case, you can use the fetch() method and loop through each result row one by one.</span>
+    <span class="c1">// You can also return arrays and other things instead of objects.  See the PDO documentation for details.</span>
+    <span class="nv">$result</span> <span class="o">=</span> <span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">fetchAll</span><span class="p">(</span><span class="nx">\PDO</span><span class="o">::</span><span class="na">FETCH_OBJ</span><span class="p">);</span>
+
+    <span class="k">foreach</span><span class="p">(</span><span class="nv">$result</span> <span class="k">as</span> <span class="nv">$row</span><span class="p">){</span>
+        <span class="k">print</span><span class="p">(</span><span class="nv">$row</span><span class="o">-&gt;</span><span class="na">Username</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">catch</span><span class="p">(</span><span class="nx">\PDOException</span> <span class="nv">$ex</span><span class="p">){</span>
+    <span class="k">print</span><span class="p">(</span><span class="nv">$ex</span><span class="o">-&gt;</span><span class="na">getMessage</span><span class="p">());</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <h4>陷阱</h4>
+    <ul>
+      <li>当绑定整型变量时，如果不传递 PDO::PARAM_INT 参数有事可能会导致 PDO 对数据加引号。
+        这会搞坏特定的 MySQL 查询。查看<a href="https://bugs.php.net/bug.php?id=44639">该 bug 报告</a>。</li>
+      <li>未使用 `set names utf8mb4` 作为首个查询，可能会导致 Unicode 数据错误地存储进数据库，这依赖于你的配置。
+        如果你绝对有把握你的 Unicode 编码数据不会出问题，那你可以不管这个。</li>
+      <li>启用持久连接可能会导致怪异的并发相关的问题。
+        这不是一个 PHP 的问题，而是一个应用层面的问题。只要你仔细考虑了后果，持久连接一般会是安全的。
+        查看 <a href="http://stackoverflow.com/questions/3332074/what-are-the-disadvantages-of-using-persistent-connection-in-pdo">Stack
+        Overfilow 这个问题</a>。</li>
+      <li>
+        <p>即使你使用了 `set names utf8mb4`，你也得确认实际的数据库表使用的是 utf8mb4 字符集！</p>
+      </li>
+      <li>
+        <p>可以在单个 execute() 调用中执行多条 SQL 语句。
+          只需使用分号分隔语句，但注意<a href="https://bugs.php.net/bug.php?id=61207">这个 bug</a>，在该文档所针对的 PHP 版本中还没修复。</p>
+      </li>
+    </ul>
+    <h4 id="pdo-further-reading">进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/book.pdo.php">PHP 手册：PDO</a></li>
+      <li><a href="http://net.tutsplus.com/tutorials/php/why-you-should-be-using-phps-pdo-for-database-access/">为什么你应该使用 PHP 的 PDO 访问数据库</a></li>
+      <li><a href="http://stackoverflow.com/questions/1402017/php-pdo-vs-normal-mysql-connect">Stack Overflow: PHP PDO vs 普通的 mysql_connect</a></li>
+      <li><a href="http://stackoverflow.com/questions/134099/are-pdo-prepared-statements-sufficient-to-prevent-sql-injection">Stack Overflow: PDO 预处理语句足以防范 SQL 注入吗？</a></li>
+      <li><a href="http://stackoverflow.com/questions/2159434/set-names-utf8-in-mysql">Stack Overflow: 在 MySQL 中使用 SET NAMES utf8？</a></li>
+    </ul>
+  </section>
+  <section id="php-tags">
+    <h2>PHP 标签</h2>
+    <h3>使用 <code>&lt;?php ?&gt;</code> 。</h3>
+    <p>有几种不同的方式用来区分 PHP 程序块：<code>&lt;?php ?&gt;</code>, <code>&lt;?= ?&gt;</code>, <code>&lt;? ?&gt;</code>, 以及<code>&lt;%
+      %&gt;</code>。对于打字来说，更短的标签更方便些，但唯一一种在所有 PHP 服务器上都一定能工作的标签是<code>&lt;?php ?&gt;</code>。
+      若你计划将你的 PHP 应用部署到一台上面的 PHP 配置你无法控制的服务器上，那么你应始终使用 <code>&lt;?php ?&gt;</code>。</p>
+
+    <p>若你仅仅是为自己编码，也能控制你将使用的 PHP 配置，你可能觉得短标签更方便些。但记住 <code>&lt;? ?&gt;</code>可能会和 XML 声明冲突，并且<code>&lt;? ?&gt;</code>实际上是 ASP 的风格。</p>
+    <p>无论你选择哪一种，确保一致。</p>
+    <h4>陷阱</h4>
+    <ul>
+      <li>在一个纯 PHP 文件（例如，仅包含一个类定义的文件）中包含一个关闭<code>?&gt;</code>标签时，确保其后不会跟着任何换行。
+        当 PHP 解析器安全地吃进跟在关闭标签之后的单个换行符时，任何其他的换行都可能被输出到浏览器，如果之后要输出某些 HTTP 头，那么可能会造成混淆。</li>
+      <li>编写Web应用时，确保在关闭<code>?&gt;</code>标签与 html 的<code>&lt;!doctype&gt;</code>标签之间不会留下换行。
+        正确的 HTML 文件中，<code>&lt;!doctype&gt;</code>标签必须是文件中的第一样东西---在其之前的任何空格或换行都会使其无效。</li>
+    </ul>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://stackoverflow.com/questions/200640/are-php-short-tags-acceptable-to-use">Stack Overflow: 可以使用 PHP 短标签吗？</a></li>
+    </ul>
+  </section>
+  <section id="auto-loading">
+    <h2>自动加载类</h2>
+    <h3>使用 <a href="http://php.net/manual/zh/function.spl-autoload-register.php">spl_autoload_register()</a> 来注册你的自动加载函数。</h3>
+    <p>PHP 提供了若干方式来自动加载包含还未加载的类的文件。
+      老的方法是使用名为 <a href="http://php.net/manual/zh/function.autoload.php"><code>__autoload()</code></a> 魔术全局函数。
+      然而你一次仅能定义一个 <code>__autoload()</code> 函数，因此如果你的程序包含一个也使用了 <code>__autoload()</code> 函数的库，就会发生冲突。</p>
+    <p>处理这个问题的正确方法是唯一地命名你的自动加载函数，然后使用 <code>spl_autoload_register()</code> 函数来注册它。
+      该函数允许定义多个 <code>__autoload()</code> 这样的函数，因此你不必担心其他代码的 <code>__autoload()</code> 函数。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">// First, define your auto-load function</span>
+<span class="k">function</span> <span class="nf">MyAutoload</span><span class="p">(</span><span class="nv">$className</span><span class="p">){</span>
+    <span class="k">include_once</span><span class="p">(</span><span class="nv">$className</span> <span class="o">.</span> <span class="s1">'.php'</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Next, register it with PHP</span>
+<span class="nb">spl_autoload_register</span><span class="p">(</span><span class="s1">'MyAutoload'</span><span class="p">);</span>
+
+<span class="c1">// Try it out!</span>
+<span class="c1">// Since we haven't included a file defining the MyClass object, our</span>
+<span class="c1">// auto-loader will kick in and include MyClass.php.</span>
+<span class="c1">// For this example, assume the MyClass class is defined in the MyClass.php</span>
+<span class="c1">// file.</span>
+<span class="nv">$var</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass</span><span class="p">();</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/function.spl-autoload-register.php">PHP手册：spl_autoload_register()</a></li>
+      <li><a href="http://stackoverflow.com/questions/791899/efficient-php-auto-loading-and-naming-strategies">Stack Overflow: 高效的 PHP 自动加载和命名策略</a></li>
+    </ul>
+  </section>
+  <section id="quotes">
+    <h2>从性能角度来看单引号和双引号</h2>
+    <h3>其实并不重要。</h3>
+    <p>已有很多人花费很多笔墨来讨论是使用单引号（<code>'</code>）还是双引号（<code>"</code>）来定义字符串。
+      单引号字符串不会被解析，因此放入字符串的任何东西都会以原样显示。
+      双引号字符串会被解析，字符串中的任何 PHP 变量都会被求值。
+      另外，转义字符如换行符 <code>\n</code> 和制表符 <code>\t</code> 在单引号字符串中不会被求值，但在双引号字符串中会被求值。</p>
+    <p>由于双引号字符串在程序运行时要求值，从而理论上使用单引号字符串能提高性能，因为 PHP 不会对单引号字符串求值。
+      这对于一定规模的应用来说也许确实如此，但对于现实中一般的应用来说，
+      区别非常小以至于根本不用在意。因此对于普通应用，你选择哪种字符串并不重要。
+      对于负载极其高的应用来说，是有点作用的。
+      根据你的应用的需要来做选择，但无论你选择什么，请保持一致。</p>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/language.types.string.php">PHP 手册：字符串</a></li>
+      <li> <a href="http://phpbench.com/">PHP 基准</a>（向下滚动到引号类型(Quote Types)）</li>
+      <li><a href="http://stackoverflow.com/questions/13620/speed-difference-in-using-inline-strings-vs-concatenation-in-php5">Stack Overflow: PHP 中单引号字符串相比双引号字符串有性能优势么？</a></li>
+    </ul>
+  </section>
+  <section id="constants">
+    <h2>define() vs. const</h2>
+    <h3>使用<a href="http://www.php.net/manual/en/function.define.php">define()</a>，除非考虑到可读性、类常量、或关注微优化</h3>
+    <p>习惯上，在 PHP 中是使用 define() 函数来定义常量。
+      但从某个时候开始，PHP 中也能够使用 <a href="http://php.net/manual/zh/language.oop5.constants.php">const</a> 关键字来声明常量了。
+      那么当定义常量时，该使用哪种方式呢？</p>
+    <p>答案在于这两种方法之间的区别。</p>
+    <ol>
+      <li>define() 在执行期定义常量，而 const 在编译期定义常量。这样 const 就有轻微的速度优势，
+        但不值得考虑这个问题，除非你在构建大规模的软件。</li>
+      <li>define() 将常量放入全局作用域，虽然你可以在常量名中包含命名空间。
+        这意味着你不能使用 define() 定义类常量。</li>
+      <li>define() 允许你在常量名和常量值中使用表达式，而 const 则都不允许。
+        这使得 define() 更加灵活。</li>
+      <li>define() 可以在 if() 代码块中调用，但 const 不行。</li>
+    </ol>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">// Let's see how the two methods treat namespaces</span>
+<span class="k">namespace</span> <span class="nx">MiddleEarth\Creatures\Dwarves</span><span class="p">;</span>
+<span class="k">const</span> <span class="no">GIMLI_ID</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">'MiddleEarth\Creatures\Elves\LEGOLAS_ID'</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+
+<span class="k">echo</span><span class="p">(</span><span class="nx">\MiddleEarth\Creatures\Dwarves\GIMLI_ID</span><span class="p">);</span>  <span class="c1">// 1</span>
+<span class="k">echo</span><span class="p">(</span><span class="nx">\MiddleEarth\Creatures\Elves\LEGOLAS_ID</span><span class="p">);</span>  <span class="c1">// 2; note that we used define()</span>
+
+<span class="c1">// Now let's declare some bit-shifted constants representing ways to enter Mordor.</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">'TRANSPORT_METHOD_SNEAKING'</span><span class="p">,</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">0</span><span class="p">);</span> <span class="c1">// OK!</span>
+<span class="k">const</span> <span class="no">TRANSPORT_METHOD_WALKING</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">//Compile error! const can't use expressions as values</span>
+
+<span class="c1">// Next, conditional constants.</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">'HOBBITS_FRODO_ID'</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="nv">$isGoingToMordor</span><span class="p">){</span>
+    <span class="nb">define</span><span class="p">(</span><span class="s1">'TRANSPORT_METHOD'</span><span class="p">,</span> <span class="nx">TRANSPORT_METHOD_SNEAKING</span><span class="p">);</span> <span class="c1">// OK!</span>
+    <span class="k">const</span> <span class="no">PARTY_LEADER_ID</span> <span class="o">=</span> <span class="nx">HOBBITS_FRODO_ID</span> <span class="c1">// Compile error: const can't be used in an if block</span>
+<span class="p">}</span>
+
+<span class="c1">// Finally, class constants</span>
+<span class="k">class</span> <span class="nc">OneRing</span><span class="p">{</span>
+    <span class="k">const</span> <span class="no">MELTING_POINT_DEGREES</span> <span class="o">=</span> <span class="mi">1000000</span><span class="p">;</span> <span class="c1">// OK!</span>
+    <span class="nb">define</span><span class="p">(</span><span class="s1">'SHOW_ELVISH_DEGREES'</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span> <span class="c1">// Compile error: can't use define() within a class</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <p>因为 define() 更加灵活，你应该使用它以避免一些令人头疼的事情，除非你明确地需要类常量。
+      使用 const 通常会产生更加可读的代码，但是以牺牲灵活性为代价的。</p>
+    <p>无论你选择哪一种，请保持一致。</p>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://stackoverflow.com/questions/2447791/define-vs-const">Stack Overflow: define() vs. const</a></li>
+      <li><a href="http://www.php.net/manual/en/language.constants.syntax.php">PHP 手册：常量</a></li>
+      <li><a href="http://stackoverflow.com/questions/1225082/define-vs-variable-in-php">Stack Overflow: define() vs. 变量</a></li>
+    </ul>
+  </section>
+  <section id="opcode-cache">
+    <h2>缓存 PHP opcode</h2>
+    <h3>使用 <a href="http://php.net/manual/zh/book.apc.php">APC</h3>
+    <p>在一个标准的 PHP 环境中，每次访问PHP脚本时，脚本都会被编译然后执行。
+      一次又一次地花费时间编译相同的脚本对于大型站点会造成性能问题。</p>
+    <p>解决方案是采用一个 opcode 缓存。
+      opcode 缓存是一个能够记下每个脚本经过编译的版本，这样服务器就不需要浪费时间一次又一次地编译了。
+      通常这些 opcode 缓存系统也能智能地检测到一个脚本是否发生改变，因此当你升级 PHP 源码时，并不需要手动清空缓存。</p>
+    <p>有几个 PHP opcode 缓存可用，其中值得关注的有 <a href="http://sourceforge.net/projects/eaccelerator/">eaccelerator</a>， <a href="http://xcache.lighttpd.net/">xcache</a>，以及<a href="http://php.net/manual/zh/book.apc.php">APC</a>。
+      APC 是 PHP 项目官方支持的，最为活跃，也最容易安装。
+      它也提供一个可选的类 <a href="http://memcached.org/">memcached</a> 的持久化键-值对存储，因此你应使用它。</p>
+    <h4>安装 APC</h4>
+    <p>在 Ubuntu 12.04 上你可以通过在终端中执行以下命令来安装 APC：</p>
+    <pre><code>user@localhost: sudo apt-get install php-apc
+</code></pre>
+    <p>除此之外，不需要进一步的配置。</p>
+    <h4>将 APC 作为一个持久化键-值存储系统来使用</h4>
+    <p>APC 也提供了对于你的脚本透明的类似于 memcached 的功能。
+      与使用 memcached 相比一个大的优势是 APC 是集成到 PHP 核心的，因此你不需要在服务器上维护另一个运行的部件，
+      并且 PHP 开发者在 APC 上的工作很活跃。
+      但从另一方面来说，APC 并不是一个分布式缓存，如果你需要这个特性，你就必须使用 memcached 了。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">// Store some values in the APC cache.  We can optionally pass a time-to-live, </span>
+<span class="c1">// but in this example the values will live forever until they're garbage-collected by APC.</span>
+<span class="nb">apc_store</span><span class="p">(</span><span class="s1">'username-1532'</span><span class="p">,</span> <span class="s1">'Frodo Baggins'</span><span class="p">);</span>
+<span class="nb">apc_store</span><span class="p">(</span><span class="s1">'username-958'</span><span class="p">,</span> <span class="s1">'Aragorn'</span><span class="p">);</span>
+<span class="nb">apc_store</span><span class="p">(</span><span class="s1">'username-6389'</span><span class="p">,</span> <span class="s1">'Gandalf'</span><span class="p">);</span>
+
+<span class="c1">// After storing these values, any PHP script can access them, no matter when it's run!</span>
+<span class="nv">$value</span> <span class="o">=</span> <span class="nb">apc_fetch</span><span class="p">(</span><span class="s1">'username-958'</span><span class="p">,</span> <span class="nv">$success</span><span class="p">);</span>
+<span class="k">if</span><span class="p">(</span><span class="nv">$success</span> <span class="o">===</span> <span class="k">true</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span> <span class="c1">// Aragorn</span>
+
+<span class="nv">$value</span> <span class="o">=</span> <span class="nb">apc_fetch</span><span class="p">(</span><span class="s1">'username-1'</span><span class="p">,</span> <span class="nv">$success</span><span class="p">);</span> <span class="c1">// $success will be set to boolean false, because this key doesn't exist.</span>
+<span class="k">if</span><span class="p">(</span><span class="nv">$success</span> <span class="o">!==</span> <span class="k">true</span><span class="p">)</span> <span class="c1">// Note the !==, this checks for true boolean false, not "falsey" values like 0 or empty string.</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">'Key not found'</span><span class="p">);</span>
+
+<span class="nb">apc_delete</span><span class="p">(</span><span class="s1">'username-958'</span><span class="p">);</span> <span class="c1">// This key will no longer be available.</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <h4>陷阱</h4>
+    <ul>
+      <li>如果你使用的不是 <a href="https://phpbestpractices.org/#serving-php">PHP-FPM</a>（例如你在使用 <a href="http://stackoverflow.com/questions/2712825/what-is-mod-php">mod_php</a> 或 <a href="http://www.fastcgi.com/mod_fastcgi/docs/mod_fastcgi.html">mod_fastcgi</a>），
+        那么每个 PHP 进程都会有自己独有的 APC 实例，包括键-值存储。
+        若你不注意，这可能会在你的应用代码中造成同步问题。</li>
+    </ul>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/book.apc.php">PHP 手册：APC</a></li>
+    </ul>
+  </section>
+  <section id="memcached">
+    <h2>PHP 与 Memcached</h2>
+    <h3>若你需要一个分布式缓存，那就使用 <a href="http://php.net/manual/zh/book.memcached.php">Memcached</a> 客户端库。否则，使用 APC。</h3>
+    <p>缓存系统通常能够提升应用的性能。Memcached 是一个受欢迎的选择，它能配合许多语言使用，包括 PHP。</p>
+    <p>然而，从一个 PHP 脚本中访问一个 Memcached 服务器，你有两个不同且命名很愚蠢的客户端库选择项： <a href="http://php.net/manual/zh/book.memcache.php">Memcache</a> 和 <a href="http://php.net/manual/zh/book.memcached.php">Memcached</a>。
+      它们是两个名字几乎相同的不同库，两者都可用于访问一个 Memcached 实例。</p>
+    <p>事实证明，Memcached 库对于 Memcached 协议的实现最好，包含了一些 Mmecache 库没有的有用的特性，
+      并且看起来 Memcached 库的开发也最为活跃。</p>
+    <p>然而，如果不需要访问来自一组分布式服务器的一个 Memcached 实例，那就<a href="https://phpbestpractices.org/#opcode-cache">使用 APC</a>。
+      APC 得到 PHP 项目的支持，具备很多和 Memcached 相同的功能，并且能够用作 opcode 缓存，这能提高 PHP 脚本的性能。</p>
+    <h4>安装M emcached 客户端库</h4>
+    <p>在安装 Memcached 服务器之后，需要安装 Memcached 客户端库。没有该库，PHP 脚本就没法与 Memcached 服务器通信。</p>
+    <p>在 Ubuntu 12.04 上，你可以使用如下命令来安装 Memcached 客户端库：</p>
+    <pre><code>user@localhost: sudo apt-get install php5-memcached
+</code></pre>
+    <h4>使用 APC 作为替代</h4>
+    <p>查看 <a href="https://phpbestpractices.org/#opcode-cache">opcode 缓存一节</a>阅读更多与使用 APC 作为
+      Memcached 替代方案相关的信息。</p>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/book.memcached.php">PHP 手册：Memcached</a></li>
+      <li><a href="http://php.net/manual/zh/book.apc.php">PHP 手册：APC</a></li>
+      <li><a href="http://stackoverflow.com/questions/1442411/using-memcache-vs-memcached-with-php">Stack Overflow: PHP 中使用 Memcache vs. Memcached</a></li>
+      <li><a href="http://stackoverflow.com/questions/815041/memcached-vs-apc-which-one-should-i-choose">Stack Overflow: Memcached vs APC，我该选择哪一个？</a></li>
+    </ul>
+  </section>
+  <section id="regex">
+    <h2>PHP 与正则表达式</h2>
+    <h3>使用 <a href="http://php.net/manual/zh/book.pcre.php">PCRE</a>(<code>preg_*</code>)家族函数</h3>
+    <p>PHP有两种使用不同的方式来使用正则表达式：PCRE（Perl兼容表示法，<code>preg_*</code>）函数
+      和 <a href="http://php.net/manual/zh/book.regex.php">POSIX</a>（POSIX 扩展表示法，<code>ereg_*</code>）
+      函数。</p>
+    <p>每个函数家族各自使用一种风格稍微不同的正则表达式。幸运的是，POSIX 家族函数从 PHP
+      5.3.0 开始就被弃用了。因此，你绝不应该使用 POSIX 家族函数编写新的代码。
+      始终使用 PRCE 家族函数，即 <code>preg_*</code> 函数。</p>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/book.pcre.php">PHP 手册：PCRE</a></li>
+      <li><a href="http://www.noupe.com/php/php-regular-expressions.html">PHP 正则表达式起步</a></li>
+    </ul>
+  </section>
+  <section id="serving-php">
+    <h2>配置 Web 服务器提供 PHP 服务</h2>
+    <h3>使用 <a href="http://php.net/manual/zh/install.fpm.php">PHP-FPM</a></h3>
+    <p>有多种方式来配置一个 web 服务器以提供 PHP 服务。传统（并且糟糕的）的方式是使用 Apache 的 <a href="http://stackoverflow.com/questions/2712825/what-is-mod-php">mod_php</a>。Mod_php将PHP
+      绑定到 Apache 自身，但是 Apache 对于该模块功能的管理工作非常糟糕。一旦遇到较大的流量，
+      就会遭受严重的内存问题。</p>
+    <p>后来两个新的可选项很快流行起来：<a href="http://www.fastcgi.com/mod_fastcgi/docs/mod_fastcgi.html">mod_fastcgi</a> 和 <a href="http://httpd.apache.org/mod_fcgid/">mod_fcgid</a>。
+      两者均保持一定数量的 PHP 执行进程，
+      Apache 将请求发送到这些端口来处理 PHP 的执行。由于这些库限制了存活的 PHP 进程的数量，
+      从而大大减少了内存使用而没有影响性能。</p>
+    <p>一些聪明的人创建一个 fastcgi 的实现，专门为真正与 PHP 工作良好而设计，他们称之为 <a href="http://php.net/manual/zh/install.fpm.php">PHP-FPM</a>。PHP 5.3.0 之前，为安装它，
+      你得跨越许多障碍，但幸运的是，PHP 5.3.3 的核心包含了 PHP-FPM，因此在 Ubuntu 12.04 上安装它非常方便。</p>
+    <p>如下示例是针对 Apache 2.2.22 的，但 PHP-FPM 也能用于其他 web 服务器如 Nginx。</p>
+    <h4>安装 PHP-FPM 和 Apache</h4>
+    <p>在 Ubuntu 12.04 上你可以使用如下命令安装 PHP-FPM 和 Apache：</p>
+    <pre><code>user@localhost: sudo apt-get install apache2-mpm-worker
+libapache2-mod-fastcgi php5-fpm
+user@localhost: sudo a2enmod actions alias fastcgi
+</code></pre>
+    <p>注意我们 <b>必须</b> 使用 apache2-mpm-worker，而不是 apache2-mpm-prefork 或 apache2-mpm-threaded。</p>
+    <p>接下来配置 Aapache 虚拟主机将 PHP 请求路由到 PHP-FPM 进程。将如下配置语句放入 Apache
+      配置文件（在 Ubuntu 12.04 上默认配置文件是 /etc/apache2/sites-available/default）。</p>
+    <pre><code>&lt;VirtualHost *:80&gt;
+    AddHandler php5-fcgi .php
+    Action php5-fcgi /php5-fcgi
+    Alias /php5-fcgi /usr/lib/cgi-bin/php5-fcgi
+    FastCgiExternalServer /usr/lib/cgi-bin/php5-fcgi -host 127.0.0.1:9000 -idle-timeout 120 -pass-header Authorization
+&lt;/VirtualHost&gt;
+</code></pre>
+    <p>最后，重启 Apache 和 FPM 进程：</p>
+    <pre><code>user@localhost: sudo service apache2 restart &amp;&amp; sudo service php5-fpm
+restart
+</code></pre>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/install.fpm.php">PHP 手册：PHP-FPM</a></li>
+      <li><a href="http://php-fpm.org/">PHP-FPM 主页</a></li>
+      <li><a href="https://alexcabal.com/installing-apache-mod_fastcgi-php-fpm-on-ubuntu-server-maverick/">在 Ubuntu 服务器 Maverick 上安装 Apache + mod_fastcgi + PHP-FPM</a></li>
+      <li><a href="http://www.joomlaperformance.com/articles/webcasts/why_mod_php_is_bad_for_performance_52_58.html">为什么 mod_php 的性能很糟糕</a></li>
+    </ul>
+  </section>
+  <section id="email">
+    <h2>发送邮件</h2>
+    <h3>使用<a href="https://code.google.com/a/apache-extras.org/p/phpmailer/">PHPMailer</a></h3>
+    <p><strong>经 PHPMailer 5.1 测试</strong></p>
+    <p>PHP 提供了一个 <a href="http://php.net/manual/zh/function.mail.php">mail()</a> 函数，看起来很简单易用。
+      不幸的是，与 PHP 中的很多东西一样，它的简单性是个幻象，因其虚假的表面使用它会导致严重的安全问题。</p>
+    <p>Email 是一组网络协议，比 PHP 的历史还曲折。完全可以说发送邮件中的陷阱与 PHP 的 mail() 函数一样多，这个可能会令你有点“不寒而栗”吧。</p>
+    <p><a href="http://code.google.com/a/apache-extras.org/p/phpmailer/">PHPMailer</a> 是一个流行而成熟的开源库，为安全地发送邮件提供一个易用的接口。
+      它关注可能陷阱，这样你可以专注于更重要的事情。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">// Include the PHPMailer library</span>
+<span class="k">require_once</span><span class="p">(</span><span class="s1">'phpmailer-5.1/class.phpmailer.php'</span><span class="p">);</span>
+
+<span class="c1">// Passing 'true' enables exceptions.  This is optional and defaults to false.</span>
+<span class="nv">$mailer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PHPMailer</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+
+<span class="c1">// Send a mail from Bilbo Baggins to Gandalf the Grey</span>
+
+<span class="c1">// Set up to, from, and the message body.  The body doesn't have to be HTML;</span>
+<span class="c1">// check the PHPMailer documentation for details.</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">Sender</span> <span class="o">=</span> <span class="s1">'bbaggins@example.com'</span><span class="p">;</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">AddReplyTo</span><span class="p">(</span><span class="s1">'bbaggins@example.com'</span><span class="p">,</span> <span class="s1">'Bilbo Baggins'</span><span class="p">);</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">SetFrom</span><span class="p">(</span><span class="s1">'bbaggins@example.com'</span><span class="p">,</span> <span class="s1">'Bilbo Baggins'</span><span class="p">);</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">AddAddress</span><span class="p">(</span><span class="s1">'gandalf@example.com'</span><span class="p">);</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">Subject</span> <span class="o">=</span> <span class="s1">'The finest weed in the South Farthing'</span><span class="p">;</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">MsgHTML</span><span class="p">(</span><span class="s1">'&lt;p&gt;You really must try it, Gandalf!&lt;/p&gt;&lt;p&gt;-Bilbo&lt;/p&gt;'</span><span class="p">);</span>
+
+<span class="c1">// Set up our connection information.</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">IsSMTP</span><span class="p">();</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">SMTPAuth</span> <span class="o">=</span> <span class="k">true</span><span class="p">;</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">SMTPSecure</span> <span class="o">=</span> <span class="s1">'ssl'</span><span class="p">;</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">Port</span> <span class="o">=</span> <span class="mi">465</span><span class="p">;</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">Host</span> <span class="o">=</span> <span class="s1">'my smpt host'</span><span class="p">;</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">Username</span> <span class="o">=</span> <span class="s1">'my smtp username'</span><span class="p">;</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">Password</span> <span class="o">=</span> <span class="s1">'my smtp password'</span><span class="p">;</span>
+
+<span class="c1">// All done!</span>
+<span class="nv">$mailer</span><span class="o">-&gt;</span><span class="na">Send</span><span class="p">();</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+  </section>
+  <section id="validating-emails">
+    <h2>验证邮件地址</h2>
+    <h3>使用 <a href="http://php.net/manual/zh/function.filter-var.php">filter_var()</a> 函数</h3>
+    <p>Web 应用可能需要做的一件常见任务是检测用户是否输入了一个有效的邮件地址。毫无疑问你可以在网上找到一些声称可以解决该问题的复杂的正则表达式，但是最简单的方法是使用
+      PHP 的内建 <code>filter_val()</code> 函数。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="nb">filter_var</span><span class="p">(</span><span class="s1">'sgamgee@example.com'</span><span class="p">,</span> <span class="nx">FILTER_VALIDATE_EMAIL</span><span class="p">);</span>
+<span class="c1">//Returns "sgamgee@example.com". This is a valid email address.</span>
+
+<span class="nb">filter_var</span><span class="p">(</span><span class="s1">'sauron@mordor'</span><span class="p">,</span> <span class="nx">FILTER_VALIDATE_EMAIL</span><span class="p">);</span>
+<span class="c1">// Returns boolean false! This is *not* a valid email address.</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/function.filter-var.php">PHP 手册：filter_var()</a></li>
+      <li><a href="http://php.net/manual/zh/filter.filters.php">PHP 手册：过滤器的类型</a></li>
+    </ul>
+  </section>
+  <section id="sanitizing-html">
+    <h2>净化 HTML 输入和输出</h2>
+    <h3>对于简单的数据净化，使用 <a href="http://php.net/manual/zh/function.htmlentities.php">htmlentities()</a> 函数,
+      复杂的数据净化则使用 <a href="http://htmlpurifier.org/">HTML Purifier</a> 库</h3>
+    <p><b>经 HTML Purifier 4.4.0 测试</b></p>
+    <p>在任何 wbe 应用中展示用户输出时，首先对其进行“净化”去除任何潜在危险的 HTML 是非常必要的。
+      一个恶意的用户可以制作某些 HTML，若被你的 web 应用直接输出，对查看它的人来说会很危险。</p>
+    <p>虽然可以尝试使用正则表达式来净化 HTML，但不要这样做。HTML是一种复杂的语言，试图使用正则表达式来净化 HTML 几乎总是失败的。</p>
+    <p>你可能会找到建议你使用 <a href="http://php.net/manual/zh/function.strip-tags.php">strip_tags()</a> 函数的观点。
+      虽然 strip_tags() 从技术上来说是安全的，但如果输入的不合法的 HTML（比如，
+      没有结束标签），它就成了一个“愚蠢”的函数，可能会去除比你期望的更多的内容。
+      由于非技术用户在通信中经常使用 <code>&lt;</code> 和 <code>&gt;</code> 字符，<code>strip_tags()</code> 也就不是一个好的选择了。</p>
+    <p>如果阅读了<a href="https://phpbestpractices.org/#validating-emails">验证邮件地址</a>一节，
+      你也许也会考虑使用 <a href="http://php.net/manual/zh/function.filter-var.php">filter_var()</a> 函数。
+      然而 <a href="http://stackoverflow.com/questions/3150413/filter-sanitize-special-chars-problem-with-line-breaks">filter_var() 函数在遇到断行时会出现问题</a>，
+      并且需要不直观的配置以接近 <a href="http://php.net/manual/zh/function.htmlentities.php">htmlentities()</a> 函数的效果，
+      因此也不是一个好的选择。</p>
+    <h4>对于简单需求的净化</h4>
+    <p>如果你的 web 应用仅需要完全地转义（因此可以无害地呈现，但不是完全去除） HTML，
+      则使用 PHP 的内建 <a href="http://php.net/manual/zh/function.htmlentities.php">htmlentities()</a> 函数。
+      这个函数要比 HTML Purifier 快得多，因此它不对 HTML 做任何验证---仅转义所有东西。</p>
+    <p>htmlentities() 不同于类似功能的函数<a href="http://php.net/manual/zh/function.htmlspecialchars.php">htmlspecialchars()</a>，
+      它会编码所有适用的 HTML 实体，而不仅仅是一个小的子集。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">// Oh no!  The user has submitted malicious HTML, and we have to display it in our web app!</span>
+<span class="nv">$evilHtml</span> <span class="o">=</span> <span class="s1">'&lt;div onclick="xss();"&gt;Mua-ha-ha!  Twiddling my evil mustache...&lt;/div&gt;'</span><span class="p">;</span>
+
+<span class="c1">// Use the ENT_QUOTES flag to make sure both single and double quotes are escaped.</span>
+<span class="c1">// Use the UTF-8 character encoding if you've stored the text as UTF-8 (as you should have).</span>
+<span class="c1">// See the UTF-8 section in this document for more details.</span>
+<span class="nv">$safeHtml</span> <span class="o">=</span> <span class="nb">htmlentities</span><span class="p">(</span><span class="nv">$evilHtml</span><span class="p">,</span> <span class="nx">ENT_QUOTES</span><span class="p">,</span> <span class="s1">'UTF-8'</span><span class="p">);</span>
+<span class="c1">// $safeHtml is now fully escaped HTML.  You can output $safeHtml to your users without fear!</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <h4>对于复杂需求的净化</h4>
+    <p>对于很多 web 应用来说，简单地转义 HTML 是不够的。
+      你可能想完全去除任何HTML，或者允许一小部分子集的 HTML 存在。
+      若是如此，则使用 <a href="http://htmlpurifier.org/">HTML Purifier</a> 库。</p>
+    <p>HTML Purifier 是一个经过充分测试但效率比较低的库。
+      这就是为什么如果你的需求并不复杂就应使用 <a href="http://php.net/manual/zh/function.htmlentities.php">htmlentities()</a>，
+      因为它的效率要快得多。</p>
+    <p>HTML Purifier 相比 <a href="http://php.net/manual/zh/function.strip-tags.php">strip_tags()</a> 是有优势的，
+      因为它在净化 HTML 之前会对其校验。
+      这意味着如果用户输入无效 HTML，HTML Purifier 相比 strip_tags() 更能保留 HTML 的原意。
+      HTML Purifier 高度可定制，允许你为 HTML 的一个子集建立白名单来允许这个 HTML 子集的实体存在输出中。</p>
+    <p>但其缺点就是相当的慢，它要求一些设置，在一个共享主机的环境里可能是不可行的。
+      其文档通常也复杂而不易理解。
+      以下示例是一个基本的使用配置。
+      查看<a href="http://htmlpurifier.org/docs">文档</a>阅读 HTML Purifier 提供的更多更高级的特性。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">// Include the HTML Purifier library</span>
+<span class="k">require_once</span><span class="p">(</span><span class="s1">'htmlpurifier-4.4.0/HTMLPurifier.auto.php'</span><span class="p">);</span>
+
+<span class="c1">// Oh no!  The user has submitted malicious HTML, and we have to display it in our web app!</span>
+<span class="nv">$evilHtml</span> <span class="o">=</span> <span class="s1">'&lt;div onclick="xss();"&gt;Mua-ha-ha!  Twiddling my evil mustache...&lt;/div&gt;'</span><span class="p">;</span>
+
+<span class="c1">// Set up the HTML Purifier object with the default configuration.</span>
+<span class="nv">$purifier</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">HTMLPurifier</span><span class="p">(</span><span class="nx">HTMLPurifier_Config</span><span class="o">::</span><span class="na">createDefault</span><span class="p">());</span>
+
+<span class="nv">$safeHtml</span> <span class="o">=</span> <span class="nv">$purifier</span><span class="o">-&gt;</span><span class="na">purify</span><span class="p">(</span><span class="nv">$evilHtml</span><span class="p">);</span>
+<span class="c1">// $safeHtml is now sanitized.  You can output $safeHtml to your users without fear!</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <h4>陷阱</h4>
+    <ul>
+      <li>以错误的字符编码使用 htmlentities() 会造成意想不到的输出。
+        在调用该函数时始终确认指定了一种字符编码，并且该编码与将被净化的字符串的编码相匹配。
+        更多细节请查看 <a href="https://phpbestpractices.org/#utf-8">UTF-8 一节</a>。</li>
+      <li>使用 htmlentities() 时，始终包含 ENT_QUOTES 和字符编码参数。
+        默认情况下，htmlentities() 不会对单引号编码。多愚蠢的默认做法！</li>
+      <li>HTML Purifier 对于复杂的 HTML 效率极其的低。可以考虑设置一个缓存方案如APC来保存经过净化的结果以备后用。</li>
+    </ul>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://htmlpurifier.org/comparison">PHP HTML 净化工具对比</a></li>
+      <li><a href="http://stackoverflow.com/questions/3605629/php-prevent-xss-with-strip-tags">Stack Overflow: 使用 strip_tags() 来防止 XSS？</a></li>
+      <li><a href="http://stackoverflow.com/questions/129677/whats-the-best-method-for-sanitizing-user-input-with-php">Stack Overflow: PHP中净化用户输入的最佳方法是什么？</a></li>
+      <li><a href="http://stackoverflow.com/questions/3150413/filter-sanitize-special-chars-problem-with-line-breaks">Stack Overflow: 断行时的 FILTER_SANITIZE_SPECIAL_CHARS 问题</a></li>
+    </ul>
+  </section>
+  <section id="utf-8">
+    <h2>PHP 与 UTF-8</h2>
+    <h3>没有一行式解决方案。小心、注意细节，以及一致性。</h3>
+    <p>PHP 中的 UTF-8 糟透了。原谅我的用词。</p>
+    <p>目前 PHP 在低层次上还不支持 Unicode。有几种方式可以确保 UTF-8 字符串能够被正确处理，
+      但并不容易，需要深入到 web 应用的所有层面，从 HTML，到 SQL，到 PHP。我们旨在提供一个简洁、
+      实用的概述。</p>
+    <h4>PHP 层面的 UTF-8</h4>
+    <p>基本的<a href="http://php.net/manual/zh/language.operators.string.php">字符串操作</a>，如串接
+      两个字符串、将字符串赋给变量，并不需要任何针对 UTF-8 的特殊东西。
+      然而，多数 <a href="http://php.net/manual/zh/ref.strings.php">字符串函数</a>，如 <a href="http://php.net/manual/zh/function.strpos.php">strpos()</a> 和 <a href="http://php.net/manual/zh/function.strlen.php">strlen</a>，就需要特殊的考虑。
+      这些函数都有一个对应的 <code>mb_*</code> 函数：例如，<a href="http://php.net/manual/zh/function.mb-strpos.php">mb_strpos()</a> 和 <a href="http://php.net/manual/zh/function.mb-strlen.php">mb_strlen()</a>。
+      这些对应的函数统称为<a href="http://php.net/manual/zh/ref.mbstring.php">多字节字符串函数</a>。
+      这些多字节字符串函数是专门为操作 Unicode 字符串而设计的。</p>
+    <p>当你操作 Unicode 字符串时，必须使用 <code>mb_*</code> 函数。
+      例如，如果你使用 <a href="http://php.net/manual/zh/function.substr.php">substr()</a> 操作一个 UTF-8 字符串，其结果就很可能包含一些乱码。
+      正确的函数应该是对应的多字节函数， <a href="http://php.net/manual/zh/function.mb-substr.php">mb_substr()</a>。</p>
+    <p>难的是始终记得使用 <code>mb_*</code> 函数。即使你仅一次忘了，你的 Unicode 字符串在接下来的处理中就可能产生乱码。</p>
+    <p>并不是所有的字符串函数都有一个对应的 <code>mb_*</code>。如果不存在你想要的那一个，那你就只能自认倒霉了。</p>
+    <p>此外，在每个 PHP 脚本的顶部（或者在全局包含脚本的顶部）你都应使用 <a href="http://php.net/manual/zh/function.mb-internal-encoding.php">mb_internal_encoding</a> 函数，如果你的脚本会输出到浏览器，那么还得紧跟其后加个<a href="http://php.net/manual/zh/function.mb-http-output.php">mb_http_output()</a> 函数。在每个脚本中显式地定义字符串的编码在以后能为你减少很多令人头疼的事情。</p>
+    <p>最后，许多操作字符串的 PHP 函数都有一个可选参数让你指定字符编码。
+      若有该选项， 你应始终显式地指明 UTF-8 编码。
+      例如，<a href="http://php.net/manual/zh/function.htmlentities.php">htmlentities()</a> 就有一个字符编码方式选项，在处理这样的字符串时应始终指定 UTF-8。</p>
+    <h4>MySQL 层面的 UTF-8</h4>
+    <p>如果你的 PHP 脚本会访问 MySQL，即使你遵从了前述的注意事项，你的字符串也有可能在数据库中存储为非 UTF-8 字符串。</p>
+    <p>确保从 PHP 到 MySQL 的字符串为 UTF-8 编码的，确保你的数据库以及数据表均设置为 utf8mb4 字符集，
+      并且在你的数据库中执行任何其他查询之前先执行 MySQL 查询 `set names utf8mb4`。这是至关重要的。
+      示例请查看<a href="https://phpbestpractices.org/#mysql">连接并查询 MySQL 数据库</a>一节内容。</p>
+    <p>注意你必须使用 `utf8mb4` 字符集来获得完整的 UTF-8 支持，而不是 `utf8` 字符集！原因请查看<a href="https://phpbestpractices.org/#utf8-further-reading">进一步阅读</a>。</p>
+    <h4>浏览器层面的 UTF-8</h4>
+    <p>使用 <a href="http://php.net/manual/zh/function.mb-http-output.php">mb_http_output()</a> 函数
+      来确保你的 PHP 脚本输出 UTF-8 字符串到浏览器。
+      并且在 HTML 页面的 <code>&lt;head&gt;</code> 标签块中包含 <a href="http://htmlpurifier.org/docs/enduser-utf8.html">字符集 <code>&lt;meta&gt;</code> 标签块</a>。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">// Tell PHP that we're using UTF-8 strings until the end of the script</span>
+<span class="nb">mb_internal_encoding</span><span class="p">(</span><span class="s1">'UTF-8'</span><span class="p">);</span>
+
+<span class="c1">// Tell PHP that we'll be outputting UTF-8 to the browser</span>
+<span class="nb">mb_http_output</span><span class="p">(</span><span class="s1">'UTF-8'</span><span class="p">);</span>
+
+<span class="c1">// Our UTF-8 test string</span>
+<span class="nv">$string</span> <span class="o">=</span> <span class="s1">'Aš galiu valgyti stiklą ir jis manęs nežeidžia'</span><span class="p">;</span>
+
+<span class="c1">// Transform the string in some way with a multibyte function</span>
+<span class="nv">$string</span> <span class="o">=</span> <span class="nb">mb_substr</span><span class="p">(</span><span class="nv">$string</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+
+<span class="c1">// Connect to a database to store the transformed string</span>
+<span class="c1">// See the PDO example in this document for more information</span>
+<span class="c1">// Note the `set names utf8mb4` commmand!</span>
+<span class="nv">$link</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">\PDO</span><span class="p">(</span>   <span class="s1">'mysql:host=your-hostname;dbname=your-db'</span><span class="p">,</span>
+                    <span class="s1">'your-username'</span><span class="p">,</span>
+                    <span class="s1">'your-password'</span><span class="p">,</span>
+                    <span class="k">array</span><span class="p">(</span>
+                        <span class="nx">\PDO</span><span class="o">::</span><span class="na">ATTR_ERRMODE</span> <span class="o">=&gt;</span> <span class="nx">\PDO</span><span class="o">::</span><span class="na">ERRMODE_EXCEPTION</span><span class="p">,</span>
+                        <span class="nx">\PDO</span><span class="o">::</span><span class="na">ATTR_PERSISTENT</span> <span class="o">=&gt;</span> <span class="k">false</span><span class="p">,</span>
+                        <span class="nx">\PDO</span><span class="o">::</span><span class="na">MYSQL_ATTR_INIT_COMMAND</span> <span class="o">=&gt;</span> <span class="s1">'set names utf8mb4'</span>
+                    <span class="p">)</span>
+                <span class="p">);</span>
+
+<span class="c1">// Store our transformed string as UTF-8 in our database</span>
+<span class="c1">// Assume our DB and tables are in the utf8mb4 character set and collation</span>
+<span class="nv">$handle</span> <span class="o">=</span> <span class="nv">$link</span><span class="o">-&gt;</span><span class="na">prepare</span><span class="p">(</span><span class="s1">'insert into Sentences (Id, Body) values (?, ?)'</span><span class="p">);</span>
+<span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">bindValue</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">PDO</span><span class="o">::</span><span class="na">PARAM_INT</span><span class="p">);</span>
+<span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">bindValue</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+<span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">execute</span><span class="p">();</span>
+
+<span class="c1">// Retrieve the string we just stored to prove it was stored correctly</span>
+<span class="nv">$handle</span> <span class="o">=</span> <span class="nv">$link</span><span class="o">-&gt;</span><span class="na">prepare</span><span class="p">(</span><span class="s1">'select * from Sentences where Id = ?'</span><span class="p">);</span>
+<span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">bindValue</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">PDO</span><span class="o">::</span><span class="na">PARAM_INT</span><span class="p">);</span>
+<span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">execute</span><span class="p">();</span>
+
+<span class="c1">// Store the result into an object that we'll output later in our HTML</span>
+<span class="nv">$result</span> <span class="o">=</span> <span class="nv">$handle</span><span class="o">-&gt;</span><span class="na">fetchAll</span><span class="p">(</span><span class="nx">\PDO</span><span class="o">::</span><span class="na">FETCH_OBJ</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="x">&lt;!doctype html&gt;</span>
+<span class="x">&lt;html&gt;</span>
+<span class="x">    &lt;head&gt;</span>
+<span class="x">        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;</span>
+<span class="x">        &lt;title&gt;UTF-8 test page&lt;/title&gt;</span>
+<span class="x">    &lt;/head&gt;</span>
+<span class="x">    &lt;body&gt;</span>
+<span class="x">        </span><span class="cp">&lt;?php</span>
+        <span class="k">foreach</span><span class="p">(</span><span class="nv">$result</span> <span class="k">as</span> <span class="nv">$row</span><span class="p">){</span>
+            <span class="k">print</span><span class="p">(</span><span class="nv">$row</span><span class="o">-&gt;</span><span class="na">Body</span><span class="p">);</span>  <span class="c1">// This should correctly output our transformed UTF-8 string to the browser</span>
+        <span class="p">}</span>
+        <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">    &lt;/body&gt;</span>
+<span class="x">&lt;/html&gt;</span>
+</pre>
+    </div>
+    <h4 id="utf8-further-reading">进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/ref.mbstring.php">PHP 手册：多字节字符串函数</a></li>
+      <li><a href="http://blog.loftdigital.com/blog/php-utf-8-cheatsheet">PHP UTF-8 备忘单</a></li>
+      <li><a href="http://stackoverflow.com/questions/571694/what-factors-make-php-unicode-incompatible">Stack Overflow: 什么因素致使 PHP 不兼容 Unicode？</a></li>
+      <li><a href="http://stackoverflow.com/questions/140728/best-practices-in-php-and-mysql-with-international-strings">Stack Overflow: PHP 与 MySQL 之间国际化字符串的最佳实践</a></li>
+      <li><a href="http://mathiasbynens.be/notes/mysql-utf8mb4">怎样在MySQL数据库中完整支持Unicode</a></li>
+    </ul>
+  </section>
+  <section id="working-with-dates-and-times">
+    <h2>处理日期和时间</h2>
+    <h3>使用<a href="http://www.php.net/manual/en/class.datetime.php">DateTime 类</a>。</h3>
+    <p>在 PHP 糟糕的老时光里，我们必须使用 <a href="http://www.php.net/manual/en/function.date.php">date()</a>， <a href="http://www.php.net/manual/en/function.gmdate.php">gmdate()</a>， <a href="http://www.php.net/manual/en/function.date-timezone-set.php">date_timezone_set()</a>， <a href="http://www.php.net/manual/en/function.strtotime.php">strtotime()</a>等等令人迷惑的
+      组合来处理日期和时间。悲哀的是现在你仍旧会找到很多在线教程在讲述这些不易使用的老式函数。</p>
+    <p>幸运的是，我们正在讨论的 PHP 版本包含友好得多的 <a href="http://www.php.net/manual/en/class.datetime.php">DateTime 类</a>。
+      该类封装了老式日期函数所有功能，甚至更多，在一个易于使用的类中，并且使得时区转换更加容易。
+      在PHP中始终使用 DateTime 类来创建，比较，改变以及展示日期。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">// Construct a new UTC date.  Always specify UTC unless you really know what you're doing!</span>
+<span class="nv">$date</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DateTime</span><span class="p">(</span><span class="s1">'2011-05-04 05:00:00'</span><span class="p">,</span> <span class="k">new</span> <span class="nx">DateTimeZone</span><span class="p">(</span><span class="s1">'UTC'</span><span class="p">));</span>
+
+<span class="c1">// Add ten days to our initial date</span>
+<span class="nv">$date</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="k">new</span> <span class="nx">DateInterval</span><span class="p">(</span><span class="s1">'P10D'</span><span class="p">));</span>
+
+<span class="k">echo</span><span class="p">(</span><span class="nv">$date</span><span class="o">-&gt;</span><span class="na">format</span><span class="p">(</span><span class="s1">'Y-m-d h:i:s'</span><span class="p">));</span> <span class="c1">// 2011-05-14 05:00:00</span>
+
+<span class="c1">// Sadly we don't have a Middle Earth timezone</span>
+<span class="c1">// Convert our UTC date to the PST (or PDT, depending) time zone</span>
+<span class="nv">$date</span><span class="o">-&gt;</span><span class="na">setTimezone</span><span class="p">(</span><span class="k">new</span> <span class="nx">DateTimeZone</span><span class="p">(</span><span class="s1">'America/Los_Angeles'</span><span class="p">));</span>
+
+<span class="c1">// Note that if you run this line yourself, it might differ by an hour depending on daylight savings</span>
+<span class="k">echo</span><span class="p">(</span><span class="nv">$date</span><span class="o">-&gt;</span><span class="na">format</span><span class="p">(</span><span class="s1">'Y-m-d h:i:s'</span><span class="p">));</span> <span class="c1">// 2011-05-13 10:00:00</span>
+
+<span class="nv">$later</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DateTime</span><span class="p">(</span><span class="s1">'2012-05-20'</span><span class="p">,</span> <span class="k">new</span> <span class="nx">DateTimeZone</span><span class="p">(</span><span class="s1">'UTC'</span><span class="p">));</span>
+
+<span class="c1">// Compare two dates</span>
+<span class="k">if</span><span class="p">(</span><span class="nv">$date</span> <span class="o">&lt;</span> <span class="nv">$later</span><span class="p">)</span>
+    <span class="k">echo</span><span class="p">(</span><span class="s1">'Yup, you can compare dates using these easy operators!'</span><span class="p">);</span>
+
+<span class="c1">// Find the difference between two dates</span>
+<span class="nv">$difference</span> <span class="o">=</span> <span class="nv">$date</span><span class="o">-&gt;</span><span class="na">diff</span><span class="p">(</span><span class="nv">$later</span><span class="p">);</span>
+
+<span class="k">echo</span><span class="p">(</span><span class="s1">'The 2nd date is '</span> <span class="o">.</span> <span class="nv">$difference</span><span class="p">[</span><span class="s1">'days'</span><span class="p">]</span> <span class="o">.</span> <span class="s1">' later than 1st date.'</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <h4>陷阱</h4>
+    <ul>
+      <li>如果你不指定一个时区，<a href="http://www.php.net/manual/en/datetime.construct.php">DateTime::__construct()</a> 就会将生成日期的时区设置为正在运行的计算机的时区。之后，这会导致大量令人头疼的事情。 <strong>在创建新日期时始终指定 UTC 时区，除非你确实清楚自己在做的事情。</strong> </li>
+      <li>如果你在 DateTime::__construct() 中使用 Unix 时间戳，那么时区将始终设置为 UTC 而不管第二个参数你指定了什么。</li>
+      <li>向 DateTime::__construct() 传递零值日期（如：“0000-00-00”，常见 MySQL 生成该值作为
+        DateTime 类型数据列的默认值）会产生一个无意义的日期，而不是“0000-00-00”。</li>
+      <li>在 32 位系统上使用 <a href="http://www.php.net/manual/en/datetime.gettimestamp.php">DateTime::getTimestamp()</a> 不会产生代表 2038 年之后日期的时间戳。64 位系统则没有问题。</li>
+    </ul>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://www.php.net/manual/en/book.datetime.php">PHP 手册：DateTime 类</a></li>
+      <li><a href="http://stackoverflow.com/questions/5319710/accessing-dates-in-php-beyond-2038">Stack Overflow: 访问超出 2038 的日期</a></li>
+    </ul>
+  </section>
+  <section id="checking-for-null">
+    <h2>检测一个值是否为 null 或 false</h2>
+    <h3>使用 <a href="http://php.net/manual/zh/language.operators.comparison.php">===</a> 操作符来检测 null 和布尔 false 值。</h3>
+    <p>PHP 宽松的类型系统提供了许多不同的方法来检测一个变量的值。
+      然而这也造成了很多问题。
+      使用 <code>==</code> 来检测一个值是否为 null 或 false，如果该值实际上是一个空字符串或 0，也会误报为 false。
+      <a href="http://php.net/manual/zh/function.isset.php">isset</a> 是检测一个变量是否有值，
+      而不是检测该值是否为 null 或 false，因此在这里使用是不恰当的。</p>
+    <p><a href="http://php.net/manual/zh/function.is-null.php">is_null()</a> 函数能准确地检测一个值是否为 null，
+      <a href="http://php.net/manual/zh/function.is-bool.php">is_bool</a> 可以检测一个值是否是布尔值（比如 false），
+      但存在一个更好的选择：<code>===</code> 操作符。<code>===</code> 检测两个值是否同一，
+      这不同于 PHP 宽松类型世界里的 <b>相等</b>。它也比 is_null() 和 is_bool() 要快一些，并且有些人认为这比使用函数来做比较更干净些。</p>
+    <h4>示例</h4>
+    <div class="highlight">
+      <pre><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="nv">$x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$y</span> <span class="o">=</span> <span class="k">null</span><span class="p">;</span>
+
+<span class="c1">// Is $x null?</span>
+<span class="k">if</span><span class="p">(</span><span class="nv">$x</span> <span class="o">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">'Oops! $x is 0, not null!'</span><span class="p">);</span>
+
+<span class="c1">// Is $y null?</span>
+<span class="k">if</span><span class="p">(</span><span class="nb">is_null</span><span class="p">(</span><span class="nv">$y</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">'Great, but could be faster.'</span><span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="nv">$y</span> <span class="o">===</span> <span class="k">null</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">'Perfect!'</span><span class="p">);</span>
+
+<span class="c1">// Does the string abc contain the character a?</span>
+<span class="k">if</span><span class="p">(</span><span class="nb">strpos</span><span class="p">(</span><span class="s1">'abc'</span><span class="p">,</span> <span class="s1">'a'</span><span class="p">))</span>
+    <span class="c1">// GOTCHA!  strpos returns 0, indicating it wishes to return the position of the first character.</span>
+    <span class="c1">// But PHP interpretes 0 as false, so we never reach this print statement!</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">'Found it!'</span><span class="p">);</span> 
+
+<span class="c1">//Solution: use !== (the opposite of ===) to see if strpos() returns 0, or boolean false.   </span>
+<span class="k">if</span><span class="p">(</span><span class="nb">strpos</span><span class="p">(</span><span class="s1">'abc'</span><span class="p">,</span> <span class="s1">'a'</span><span class="p">)</span> <span class="o">!==</span> <span class="k">false</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">'Found it for real this time!'</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+    </div>
+    <h4>陷阱</h4>
+    <ul>
+      <li>测试一个返回 0 或布尔 false 的函数的返回值时，如 strpos()，始终使用 <code>===</code> 和<code>!==</code>，否则你就会碰到问题。</li>
+    </ul>
+    <h4>进一步阅读</h4>
+    <ul>
+      <li><a href="http://php.net/manual/zh/language.operators.comparison.php">PHP 手册：比较操作符</a></li>
+      <li><a href="http://stackoverflow.com/questions/8228837/is-nullx-vs-x-null-in-php">Stack Overflow: is_null() vs ===</a></li>
+    </ul>
+  </section>
+  <section id="suggestions">
+    <h2>建议与指正</h2>
+    <p>感谢阅读！如果你有些地方还不太理解，很正常，PHP 是复杂的，并且充斥着陷阱。
+      因为我也只是一个人，所以本文档中难免存在错误。</p>
+    <p>如果你想为本文档贡献建议或纠正错误之处，
+      请使用<a href="https://phpbestpractices.org/#maintainers">最后修订日期&amp;维护者</a> 一节中的信息联系我。</p>
+  </section>
+</article>
+<a class="v-fork-me" href="https://github.com/justjavac/PHP-Best-Practices-zh_CN" target="_blank" rel="nofollow">
+      <img src="images/forkme_right_darkblue.png" alt="Fork me on GitHub">
+    </a>
+<footer> <a href="#">PHP 最佳实践（译）</a> by <a rel="author" href="https://alexcabal.com">Alex Cabal</a> is released into the <a rel="license" href="http://creativecommons.org/publicdomain/zero/1.0/">public domain</a>. <a href="https://alexcabal.com/why-i-release-things-into-the-public-domain/">Why?</a> </footer>
+</body>
+</html>
