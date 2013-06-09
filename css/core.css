@@ -13,11 +13,9 @@ abbr[title],dfn[title]{border-bottom:1px dotted;cursor:help}
 table{border-collapse:collapse;border-spacing:0}
 hr{display:block;height:1px;border:0;border-top:1px solid #ccc;margin:1em 0;padding:0}
 input,select{vertical-align:middle}
-
 html{
 	background: url('../images/wood.jpg');
 }
-
 body{
 	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
 	color: #333333;
@@ -27,7 +25,6 @@ body{
 	line-height: 20px;
 	padding: 20px;
 }
-
 article{
 	background: #fafafa;
 	border: 1px solid #dddddd;
@@ -36,7 +33,6 @@ article{
 	margin-left: 250px;
 	border-radius: 5px;
 }
-
 footer{
 	margin-top: 20px;
 	text-align: center;
@@ -44,12 +40,14 @@ footer{
 	margin-left: 240px;
 	text-shadow: 1px 1px 0px rgba(255,255,255,.8);
 }
-
 code{
 	white-space: pre;
 	font-family: monospace;
 }
-
+em {
+	font-style: normal;
+	color: #F1D;
+}
 h1{
 	font-size: 60px;
 	line-height: 60px;
@@ -57,46 +55,38 @@ h1{
 	color: rgba(255,255,255,1);
 	text-shadow: 1px 1px 1px rgba(0, 0, 0, .5);
 }
-
 h1 span{
 	display: block;
 	font-size: 30px;
 	line-height: 30px;
 }
-
 h2{
 	font-size: 30px;
 	line-height: 30px;
 	margin-bottom: 10px;
 }
-
 h3{
 	font-size: 20px;
 	line-height: 28px;
 	margin: 10px 0px;
 }
-
 h4{
 	font-size: 18px;
 	line-height: 26px;
 	margin-top: 20px;
 }
-
 * + p,
 * + article ol,
 * + article ul,
 * + article li{
 	margin-top: 10px;
 }
-
 article ol li{
 	margin-left: 20px;
 }
-
 p + h2{
 	margin-top: 50px;
 }
-
 section + section:before{
 	content: url('../images/divider.png');
 	display: block;
@@ -105,15 +95,12 @@ section + section:before{
 	text-align: center;
 	opacity: .5;
 }
-
 ul{
 	margin-left: 15px;
 }
-
 .terminal{
 	font-family: Monospace;
 }
-
 nav{
 	display: block;
 	width: 230px;
@@ -121,35 +108,28 @@ nav{
 	position: absolute;
 	top: 130px;
 }
-
 nav.sticky{
 	position: fixed;
 	top: 5px;
 }
-
 nav ol{
 	list-style-type: none;
 }
-
 nav ol li + li a,
 nav ol li:first-child a{
 	border-top: 1px solid #dddddd;
 }
-
 nav ol li:last-child a{
 	border-bottom: 1px solid #dddddd;
 }
-
 nav ol li:first-child a{
 	border-top-right-radius: 5px;
 	border-top-left-radius: 5px;
 }
-
 nav ol li:last-child a{
 	border-bottom-right-radius: 5px;
 	border-bottom-left-radius: 5px;
 }
-
 nav ol li a{
 	background: #ffffff;
 	display: block;
@@ -160,17 +140,14 @@ nav ol li a{
 	line-height: 12px;
 	font-size: 12px;
 }
-
 a:link,
 nav ol li a:visited{
 	color: #4273DC;
 }
-
 nav ol li a:hover{
 	color: #2F436C;
 	background: #f4f4f4;
 }
-
 nav ol li a.highlighted,
 nav ol li a.highlighted:hover{
 	color: #ffffff;
@@ -179,19 +156,15 @@ nav ol li a.highlighted:hover{
 	border-left: 1px solid #4273DC;
 	border-right: 1px solid #4273DC;
 }
-
 nav ol li:first-child a.highlighted{
 	border-top: 1px solid #4273DC;
 }
-
 nav ol li:last-child a.highlighted{
 	border-bottom: 1px solid #4273DC;
 }
-
 * + code.terminal{
 	margin-top: 10px;
 }
-
 code.terminal{
 	color:#fff;
 	background-color:#444;
@@ -210,11 +183,9 @@ code.terminal{
 	display: block;
 	white-space: normal;
 }
-
 code.terminal.multiline span{
 	display: block;
 }
-
 code.terminal:before,
 code.terminal.multiline span:before{
 	display: inline;
@@ -222,23 +193,18 @@ code.terminal.multiline span:before{
 	color: #56DA55;
 	font-weight: bold;
 }
-
 code.terminal:not(.multiline):before{
 	content:'user@localhost:';
 }
-
 code.terminal[data-hostname]:not(.multiline):before{
 	content:'user@'attr(data-hostname)':';
 }
-
 code.terminal.multiline span:before{
 	content:'user@localhost:';
 }
-
 code.terminal.multiline span[data-hostname]:before{
 	content:'user@'attr(data-hostname)':';
 }
-
 code.terminal.multiline span + span{
 	margin-top: 5px;
 }
