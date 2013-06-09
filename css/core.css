@@ -223,7 +223,7 @@ pre>code {
 	background:transparent
 }
 .highlight pre, pre {
-	background-color:#f8f8f8;
+	background-color:#333;
 	border:1px solid #ddd;
 	font-size:13px;
 	line-height:19px;
@@ -238,38 +238,35 @@ pre code, pre tt {
 	border:none
 }
 .highlight {
-	background:#ffffff
+	background: #333;
+	color: #F6F3E8;
 }
 .highlight .c {
-	color:#999988;
-	font-style:italic
+	color:#7C7C7C;
 }
 .highlight .err {
 	color:#a61717;
 	background-color:#e3d2d2
 }
 .highlight .k {
-	font-weight:bold
+	color:#96CBFE;
 }
 .highlight .o {
 	font-weight:bold
 }
 .highlight .cm {
-	color:#999988;
-	font-style:italic
+	color:#7C7C7C;
 }
 .highlight .cp {
 	color:#999999;
 	font-weight:bold
 }
 .highlight .c1 {
-	color:#999988;
-	font-style:italic
+	color:#7C7C7C;
 }
 .highlight .cs {
 	color:#999999;
 	font-weight:bold;
-	font-style:italic
 }
 .highlight .gd {
 	color:#000000;
@@ -341,7 +338,7 @@ pre code, pre tt {
 	color:#333333
 }
 .highlight .na {
-	color:#008080
+	color:#FFD2A7
 }
 .highlight .nb {
 	color:#0086B3
@@ -371,7 +368,7 @@ pre code, pre tt {
 	color:#000080
 }
 .highlight .nv {
-	color:#008080
+	color:#C6C5FE
 }
 .highlight .ow {
 	font-weight:bold
@@ -380,16 +377,16 @@ pre code, pre tt {
 	color:#bbbbbb
 }
 .highlight .mf {
-	color:#009999
+	color:#FF73FD
 }
 .highlight .mh {
-	color:#009999
+	color:#FF73FD
 }
 .highlight .mi {
-	color:#009999
+	color:#FF73FD
 }
 .highlight .mo {
-	color:#009999
+	color:#FF73FD
 }
 .highlight .sb {
 	color:#d14
@@ -419,7 +416,7 @@ pre code, pre tt {
 	color:#009926
 }
 .highlight .s1 {
-	color:#d14
+	color:#A8FF60
 }
 .highlight .ss {
 	color:#990073
