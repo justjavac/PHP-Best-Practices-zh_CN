@@ -333,6 +333,7 @@
       <li><a href="http://php.net/manual/zh/language.types.string.php">PHP 手册：字符串</a></li>
       <li> <a href="http://phpbench.com/">PHP 基准</a>（向下滚动到引号类型(Quote Types)）</li>
       <li><a href="http://stackoverflow.com/questions/13620/speed-difference-in-using-inline-strings-vs-concatenation-in-php5">Stack Overflow: PHP 中单引号字符串相比双引号字符串有性能优势么？</a></li>
+      <li><a href="http://www.laruence.com/2008/08/19/338.html">Laruence：PHP的单引号和双引号</a></li>
     </ul>
   </section>
   <section id="constants">
@@ -437,7 +438,7 @@
     </div>
     <h4>陷阱</h4>
     <ul>
-      <li>如果你使用的不是 <a href="https://phpbestpractices.org/#serving-php">PHP-FPM</a>（例如你在使用 <a href="http://stackoverflow.com/questions/2712825/what-is-mod-php">mod_php</a> 或 <a href="http://www.fastcgi.com/mod_fastcgi/docs/mod_fastcgi.html">mod_fastcgi</a>），
+      <li>如果你使用的不是 <a href="#serving-php">PHP-FPM</a>（例如你在使用 <a href="http://stackoverflow.com/questions/2712825/what-is-mod-php">mod_php</a> 或 <a href="http://www.fastcgi.com/mod_fastcgi/docs/mod_fastcgi.html">mod_fastcgi</a>），
         那么每个 PHP 进程都会有自己独有的 APC 实例，包括键-值存储。
         若你不注意，这可能会在你的应用代码中造成同步问题。</li>
     </ul>
@@ -454,7 +455,7 @@
       它们是两个名字几乎相同的不同库，两者都可用于访问一个 Memcached 实例。</p>
     <p>事实证明，Memcached 库对于 Memcached 协议的实现最好，包含了一些 Mmecache 库没有的有用的特性，
       并且看起来 Memcached 库的开发也最为活跃。</p>
-    <p>然而，如果不需要访问来自一组分布式服务器的一个 Memcached 实例，那就<a href="https://phpbestpractices.org/#opcode-cache">使用 APC</a>。
+    <p>然而，如果不需要访问来自一组分布式服务器的一个 Memcached 实例，那就<a href="#opcode-cache">使用 APC</a>。
       APC 得到 PHP 项目的支持，具备很多和 Memcached 相同的功能，并且能够用作 opcode 缓存，这能提高 PHP 脚本的性能。</p>
     <h4>安装M emcached 客户端库</h4>
     <p>在安装 Memcached 服务器之后，需要安装 Memcached 客户端库。没有该库，PHP 脚本就没法与 Memcached 服务器通信。</p>
@@ -462,7 +463,7 @@
     <pre><code>user@localhost: sudo apt-get install php5-memcached
 </code></pre>
     <h4>使用 APC 作为替代</h4>
-    <p>查看 <a href="https://phpbestpractices.org/#opcode-cache">opcode 缓存一节</a>阅读更多与使用 APC 作为
+    <p>查看 <a href="#opcode-cache">opcode 缓存一节</a>阅读更多与使用 APC 作为
       Memcached 替代方案相关的信息。</p>
     <h4>进一步阅读</h4>
     <ul>
@@ -484,7 +485,7 @@
     <h4>进一步阅读</h4>
     <ul>
       <li><a href="http://php.net/manual/zh/book.pcre.php">PHP 手册：PCRE</a></li>
-      <li><a href="http://www.noupe.com/php/php-regular-expressions.html">PHP 正则表达式起步</a></li>
+      <li><a href="http://www.noupe.com/php/php-regular-expressions.html">PHP 正则表达式起步</a> （这么好的文章，咋就没有中文版呢，如果你发现了或者翻译了，请通知我）</li>
     </ul>
   </section>
   <section id="serving-php">
@@ -606,7 +607,7 @@ restart
       虽然 strip_tags() 从技术上来说是安全的，但如果输入的不合法的 HTML（比如，
       没有结束标签），它就成了一个“愚蠢”的函数，可能会去除比你期望的更多的内容。
       由于非技术用户在通信中经常使用 <code>&lt;</code> 和 <code>&gt;</code> 字符，<code>strip_tags()</code> 也就不是一个好的选择了。</p>
-    <p>如果阅读了<a href="https://phpbestpractices.org/#validating-emails">验证邮件地址</a>一节，
+    <p>如果阅读了<a href="#validating-emails">验证邮件地址</a>一节，
       你也许也会考虑使用 <a href="http://php.net/manual/zh/function.filter-var.php">filter_var()</a> 函数。
       然而 <a href="http://stackoverflow.com/questions/3150413/filter-sanitize-special-chars-problem-with-line-breaks">filter_var() 函数在遇到断行时会出现问题</a>，
       并且需要不直观的配置以接近 <a href="http://php.net/manual/zh/function.htmlentities.php">htmlentities()</a> 函数的效果，
@@ -667,7 +668,7 @@ restart
     <ul>
       <li>以错误的字符编码使用 htmlentities() 会造成意想不到的输出。
         在调用该函数时始终确认指定了一种字符编码，并且该编码与将被净化的字符串的编码相匹配。
-        更多细节请查看 <a href="https://phpbestpractices.org/#utf-8">UTF-8 一节</a>。</li>
+        更多细节请查看 <a href="#utf-8">UTF-8 一节</a>。</li>
       <li>使用 htmlentities() 时，始终包含 ENT_QUOTES 和字符编码参数。
         默认情况下，htmlentities() 不会对单引号编码。多愚蠢的默认做法！</li>
       <li>HTML Purifier 对于复杂的 HTML 效率极其的低。可以考虑设置一个缓存方案如APC来保存经过净化的结果以备后用。</li>
@@ -707,8 +708,8 @@ restart
     <p>如果你的 PHP 脚本会访问 MySQL，即使你遵从了前述的注意事项，你的字符串也有可能在数据库中存储为非 UTF-8 字符串。</p>
     <p>确保从 PHP 到 MySQL 的字符串为 UTF-8 编码的，确保你的数据库以及数据表均设置为 utf8mb4 字符集，
       并且在你的数据库中执行任何其他查询之前先执行 MySQL 查询 `set names utf8mb4`。这是至关重要的。
-      示例请查看<a href="https://phpbestpractices.org/#mysql">连接并查询 MySQL 数据库</a>一节内容。</p>
-    <p>注意你必须使用 `utf8mb4` 字符集来获得完整的 UTF-8 支持，而不是 `utf8` 字符集！原因请查看<a href="https://phpbestpractices.org/#utf8-further-reading">进一步阅读</a>。</p>
+      示例请查看<a href="#mysql">连接并查询 MySQL 数据库</a>一节内容。</p>
+    <p>注意你必须使用 `utf8mb4` 字符集来获得完整的 UTF-8 支持，而不是 `utf8` 字符集！原因请查看<a href="#utf8-further-reading">进一步阅读</a>。</p>
     <h4>浏览器层面的 UTF-8</h4>
     <p>使用 <a href="http://php.net/manual/zh/function.mb-http-output.php">mb_http_output()</a> 函数
       来确保你的 PHP 脚本输出 UTF-8 字符串到浏览器。
@@ -889,7 +890,7 @@ restart
     <p>感谢阅读！如果你有些地方还不太理解，很正常，PHP 是复杂的，并且充斥着陷阱。
       因为我也只是一个人，所以本文档中难免存在错误。</p>
     <p>如果你想为本文档贡献建议或纠正错误之处，
-      请使用<a href="https://phpbestpractices.org/#maintainers">最后修订日期&amp;维护者</a> 一节中的信息联系我。</p>
+      请使用<a href="#maintainers">最后修订日期&amp;维护者</a> 一节中的信息联系我。</p>
   </section>
 </article>
 <a class="v-fork-me" href="https://github.com/justjavac/PHP-Best-Practices-zh_CN" target="_blank" rel="nofollow">
