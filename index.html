@@ -137,8 +137,8 @@
   </section>
   <section id="passwords">
     <h2>存储密码</h2>
-    <h3>使用<a href="http://www.openwall.com/phpass/">phpass</a>库来哈希和比较密码</h3>
-    <p><strong>经 phpass 0.3 测试</strong>，在存入数据库之前进行哈希保护用户密码的标准方式。
+    <h3>使用 <a href="http://www.openwall.com/phpass/">phpass</a> 库来哈希和比较密码</h3>
+    <p><em>经 phpass 0.3 测试</em>，在存入数据库之前进行哈希保护用户密码的标准方式。
       许多常用的哈希算法如 md5，甚至是 sha1 对于密码存储都是不安全的，
       因为<a href="http://arstechnica.com/security/2013/05/how-crackers-make-minced-meat-out-of-your-passwords/">骇客能够使用那些算法轻而易举地破解密码</a>。</p>
     <p>对密码进行哈希最安全的方法是使用 bcrypt 算法。开源的 phpass 库以一个易于使用的类来提供该功能。</p>
@@ -341,7 +341,7 @@
   </section>
   <section id="constants">
     <h2>define() vs. const</h2>
-    <h3>使用<a href="http://www.php.net/manual/en/function.define.php">define()</a>，除非考虑到可读性、类常量、或关注微优化</h3>
+    <h3>使用 <a href="http://www.php.net/manual/en/function.define.php">define()</a>，除非考虑到可读性、类常量、或关注微优化</h3>
     <p>习惯上，在 PHP 中是使用 define() 函数来定义常量。
       但从某个时候开始，PHP 中也能够使用 <a href="http://php.net/manual/zh/language.oop5.constants.php">const</a> 关键字来声明常量了。
       那么当定义常量时，该使用哪种方式呢？</p>
@@ -537,7 +537,7 @@ restart
   <section id="email">
     <h2>发送邮件</h2>
     <h3>使用<a href="https://code.google.com/a/apache-extras.org/p/phpmailer/">PHPMailer</a></h3>
-    <p><strong>经 PHPMailer 5.1 测试</strong></p>
+    <p><em>经 PHPMailer 5.1 测试</em></p>
     <p>PHP 提供了一个 <a href="http://php.net/manual/zh/function.mail.php">mail()</a> 函数，看起来很简单易用。
       不幸的是，与 PHP 中的很多东西一样，它的简单性是个幻象，因其虚假的表面使用它会导致严重的安全问题。</p>
     <p>Email 是一组网络协议，比 PHP 的历史还曲折。完全可以说发送邮件中的陷阱与 PHP 的 mail() 函数一样多，这个可能会令你有点“不寒而栗”吧。</p>
