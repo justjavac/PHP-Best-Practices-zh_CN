@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-<title>PHP 最佳实践: a short, practical guide for common and confusing PHP tasks</title>
+<title>PHP 最佳实践: 一份简短的关于 PHP 容易混淆技术的实用指南</title>
 <meta charset="utf-8" />
 <link type="text/css" rel="stylesheet" href="css/core.css" media="screen" />
 <script type="text/javascript" src="js/jquery/jquery-1.7.2.min.js"></script>
@@ -43,7 +43,7 @@
 		</script>
 </head>
 <body>
-<h1>PHP 最佳实践（译）<span>A short, practical guide for common and confusing PHP tasks</span></h1>
+<h1>PHP 最佳实践（译）<span>一份简短的关于 PHP 容易混淆技术的实用指南</span></h1>
 <nav>
   <ol>
     <li><a href="#maintainers">最后修订日期 &amp; 维护者</a></li>
@@ -90,7 +90,7 @@
 
     <p>尽管如此，如今它还是 Web 开发方面最流行的语言。
       因其悠久的历史，对于实现密码哈希和数据库访问诸如此类的基本任务你能够找到很多教程。
-      但问题在于，5 个教程，你就很有可能找到 5 种完全不同的完成任务的方式，那么哪种是“正确”的方式呢？
+      但问题在于，5 个教程，你就很有可能找到 5 种完全不同的完成任务的方式，那么哪种是「正确」的方式呢？
       其他方式有难以捉摸的 bug 或者陷阱？
       确实很难搞明白，所以你经常要在互联网上反复查找尝试确认正确的答案。</p>
 
@@ -110,7 +110,7 @@
     <p>本文将指出一些我们认为是 PHP 中最新最好的东西。然而，这意味如果你在使用老版本的 PHP，
       一些用来实现这些解决方案的特性对你并不可用。</p>
 
-    <p>这份文档会一直更新，我会尽我最大努力保持该文档与PHP的发展同步。</p>
+    <p>这份文档会一直更新，我会尽我最大努力保持该文档与 PHP 的发展同步。</p>
 
     <h4><strong>不</strong>是什么</h4>
     <p>本文档不是一份 PHP 教程。你应该在别处学习语言基础和语法。</p>
@@ -145,19 +145,18 @@
     <h4>示例</h4>
     <div class="highlight">
       <pre><span class="o">&lt;?</span><span class="nx">php</span>
-<span class="c1">// Include the phpass library</span>
+<span class="c1">// Include phpass 库</span>
 <span class="k">require_once</span><span class="p">(</span><span class="s1">'phpass-03/PasswordHash.php'</span><span class="p">)</span>
 
-<span class="c1">// Initialize the hasher without portable hashes (this is more secure)</span>
+<span class="c1">// 初始化散列器为不可移植(这样更安全)</span>
 <span class="nv">$hasher</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PasswordHash</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
 
-<span class="c1">// Hash the password. $hashedPassword will be a 60-character string.</span>
+<span class="c1">// 计算密码的哈希值。$hashedPassword 是一个长度为 60 个字符的字符串.</span>
 <span class="nv">$hashedPassword</span> <span class="o">=</span> <span class="nv">$hasher</span><span class="o">-&gt;</span><span class="na">HashPassword</span><span class="p">(</span><span class="s1">'my super cool password'</span><span class="p">);</span>
 
-<span class="c1">// You can now safely store the contents of $hashedPassword in your database!</span>
+<span class="c1">// 你现在可以安全地将 $hashedPassword 保存到数据库中!</span>
 
-<span class="c1">// Check if a user has provided the correct password by comparing what they</span>
-<span class="c1">// typed with our hash</span>
+<span class="c1">// 通过比较用户输入内容（产生的哈希值）和我们之前计算出的哈希值，来判断用户是否输入了正确的密码</span>
 <span class="nv">$hasher</span><span class="o">-&gt;</span><span class="na">CheckPassword</span><span class="p">(</span><span class="s1">'the wrong password'</span><span class="p">,</span> <span class="nv">$hashedPassword</span><span class="p">);</span>  <span class="c1">// false</span>
 
 <span class="nv">$hasher</span><span class="o">-&gt;</span><span class="na">CheckPassword</span><span class="p">(</span><span class="s1">'my super cool password'</span><span class="p">,</span> <span class="nv">$hashedPassword</span><span class="p">);</span>  <span class="c1">// true</span>
@@ -183,12 +182,12 @@
     <p>你应该使用 PDO 的预处理语句函数来帮助防范 SQL 注入攻击。
       使用函数 <a href="http://php.net/manual/zh/pdostatement.bindvalue.php">bindValue</a> 来确保你的 SQL 免于一级 SQL 注入攻击。
       （虽然并不是 100% 安全的，查看进一步阅读获取更多细节。）
-      在以前，这必须使用一些“魔术引号(magic quotes)”函数的组合来实现。PDO 使得那堆东西不再需要。</p>
+      在以前，这必须使用一些「魔术引号(magic quotes)」函数的组合来实现。PDO 使得那堆东西不再需要。</p>
     <h4>示例</h4>
     <div class="highlight">
       <pre><span class="o">&lt;?</span><span class="nx">php</span>
 <span class="k">try</span><span class="p">{</span>
-    <span class="c1">// Create a new connection.</span>
+    <span class="c1">// 新建一个数据库连接</span>
     <span class="c1">// You'll probably want to replace hostname with localhost in the first parameter.</span>
     <span class="c1">// The PDO options we pass do the following:</span>
     <span class="c1">// \PDO::ATTR_ERRMODE enables exceptions for errors.  This is optional but can be handy.</span>
@@ -296,19 +295,17 @@
     <h4>示例</h4>
     <div class="highlight">
       <pre><span class="o">&lt;?</span><span class="nx">php</span>
-<span class="c1">// First, define your auto-load function</span>
+<span class="c1">// 首先，定义你的自动载入的函数</span>
 <span class="k">function</span> <span class="nf">MyAutoload</span><span class="p">(</span><span class="nv">$className</span><span class="p">){</span>
     <span class="k">include_once</span><span class="p">(</span><span class="nv">$className</span> <span class="o">.</span> <span class="s1">'.php'</span><span class="p">);</span>
 <span class="p">}</span>
 
-<span class="c1">// Next, register it with PHP</span>
+<span class="c1">// 然后注册它。</span>
 <span class="nb">spl_autoload_register</span><span class="p">(</span><span class="s1">'MyAutoload'</span><span class="p">);</span>
 
 <span class="c1">// Try it out!</span>
-<span class="c1">// Since we haven't included a file defining the MyClass object, our</span>
-<span class="c1">// auto-loader will kick in and include MyClass.php.</span>
-<span class="c1">// For this example, assume the MyClass class is defined in the MyClass.php</span>
-<span class="c1">// file.</span>
+<span class="c1">// 因为我们没包含一个定义有 MyClass 的文件，所以自动加载器会介入并包含 MyClass.php。</span>
+<span class="c1">// 在本例中，假定在 MyClass.php 文件中定义了 MyClass 类。</span>
 <span class="nv">$var</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass</span><span class="p">();</span>
 <span class="cp">?&gt;</span><span class="x"></span>
 </pre>
@@ -358,34 +355,35 @@
     <h4>示例</h4>
     <div class="highlight">
       <pre><span class="o">&lt;?</span><span class="nx">php</span>
-<span class="c1">// Let's see how the two methods treat namespaces</span>
+<span class="c1">// 来看看这两种方法如何处理 namespaces</span>
 <span class="k">namespace</span> <span class="nx">MiddleEarth\Creatures\Dwarves</span><span class="p">;</span>
 <span class="k">const</span> <span class="no">GIMLI_ID</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
 <span class="nb">define</span><span class="p">(</span><span class="s1">'MiddleEarth\Creatures\Elves\LEGOLAS_ID'</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
 
 <span class="k">echo</span><span class="p">(</span><span class="nx">\MiddleEarth\Creatures\Dwarves\GIMLI_ID</span><span class="p">);</span>  <span class="c1">// 1</span>
-<span class="k">echo</span><span class="p">(</span><span class="nx">\MiddleEarth\Creatures\Elves\LEGOLAS_ID</span><span class="p">);</span>  <span class="c1">// 2; note that we used define()</span>
+<span class="k">echo</span><span class="p">(</span><span class="nx">\MiddleEarth\Creatures\Elves\LEGOLAS_ID</span><span class="p">);</span>  <span class="c1">// 2; 注意：我们使用了 define()</span>
 
 <span class="c1">// Now let's declare some bit-shifted constants representing ways to enter Mordor.</span>
 <span class="nb">define</span><span class="p">(</span><span class="s1">'TRANSPORT_METHOD_SNEAKING'</span><span class="p">,</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">0</span><span class="p">);</span> <span class="c1">// OK!</span>
 <span class="k">const</span> <span class="no">TRANSPORT_METHOD_WALKING</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">//Compile error! const can't use expressions as values</span>
 
-<span class="c1">// Next, conditional constants.</span>
+<span class="c1">// 接下来, 条件常量。</span>
 <span class="nb">define</span><span class="p">(</span><span class="s1">'HOBBITS_FRODO_ID'</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
 
 <span class="k">if</span><span class="p">(</span><span class="nv">$isGoingToMordor</span><span class="p">){</span>
     <span class="nb">define</span><span class="p">(</span><span class="s1">'TRANSPORT_METHOD'</span><span class="p">,</span> <span class="nx">TRANSPORT_METHOD_SNEAKING</span><span class="p">);</span> <span class="c1">// OK!</span>
-    <span class="k">const</span> <span class="no">PARTY_LEADER_ID</span> <span class="o">=</span> <span class="nx">HOBBITS_FRODO_ID</span> <span class="c1">// Compile error: const can't be used in an if block</span>
+    <span class="k">const</span> <span class="no">PARTY_LEADER_ID</span> <span class="o">=</span> <span class="nx">HOBBITS_FRODO_ID</span> <span class="c1">// 编译错误: const 不能用于 if 块中</span>
 <span class="p">}</span>
 
-<span class="c1">// Finally, class constants</span>
+<span class="c1">// 最后, 类常量</span>
 <span class="k">class</span> <span class="nc">OneRing</span><span class="p">{</span>
     <span class="k">const</span> <span class="no">MELTING_POINT_DEGREES</span> <span class="o">=</span> <span class="mi">1000000</span><span class="p">;</span> <span class="c1">// OK!</span>
-    <span class="nb">define</span><span class="p">(</span><span class="s1">'SHOW_ELVISH_DEGREES'</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span> <span class="c1">// Compile error: can't use define() within a class</span>
+    <span class="nb">define</span><span class="p">(</span><span class="s1">'SHOW_ELVISH_DEGREES'</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span> <span class="c1">// 编译错误: 在类内不能使用 define()</span>
 <span class="p">}</span>
 <span class="cp">?&gt;</span><span class="x"></span>
 </pre>
     </div>
+    <p><em>小插曲</em>：当我看到第一行的 MiddleEarth 还没有感觉到什么，再往下看到 Mordor 时，震惊了。<b>OneRing</b>，<b>OneRing</b>，<b>OneRingggggg</b>！</p>
     <p>因为 define() 更加灵活，你应该使用它以避免一些令人头疼的事情，除非你明确地需要类常量。
       使用 const 通常会产生更加可读的代码，但是以牺牲灵活性为代价的。</p>
     <p>无论你选择哪一种，请保持一致。</p>
@@ -540,7 +538,7 @@ restart
     <p><em>经 PHPMailer 5.1 测试</em></p>
     <p>PHP 提供了一个 <a href="http://php.net/manual/zh/function.mail.php">mail()</a> 函数，看起来很简单易用。
       不幸的是，与 PHP 中的很多东西一样，它的简单性是个幻象，因其虚假的表面使用它会导致严重的安全问题。</p>
-    <p>Email 是一组网络协议，比 PHP 的历史还曲折。完全可以说发送邮件中的陷阱与 PHP 的 mail() 函数一样多，这个可能会令你有点“不寒而栗”吧。</p>
+    <p>Email 是一组网络协议，比 PHP 的历史还曲折。完全可以说发送邮件中的陷阱与 PHP 的 mail() 函数一样多，这个可能会令你有点「不寒而栗」吧。</p>
     <p><a href="http://code.google.com/a/apache-extras.org/p/phpmailer/">PHPMailer</a> 是一个流行而成熟的开源库，为安全地发送邮件提供一个易用的接口。
       它关注可能陷阱，这样你可以专注于更重要的事情。</p>
     <h4>示例</h4>
@@ -610,7 +608,7 @@ restart
     <p>虽然可以尝试使用正则表达式来净化 HTML，但不要这样做。HTML是一种复杂的语言，试图使用正则表达式来净化 HTML 几乎总是失败的。</p>
     <p>你可能会找到建议你使用 <a href="http://php.net/manual/zh/function.strip-tags.php">strip_tags()</a> 函数的观点。
       虽然 strip_tags() 从技术上来说是安全的，但如果输入的不合法的 HTML（比如，
-      没有结束标签），它就成了一个“愚蠢”的函数，可能会去除比你期望的更多的内容。
+      没有结束标签），它就成了一个「愚蠢」的函数，可能会去除比你期望的更多的内容。
       由于非技术用户在通信中经常使用 <code>&lt;</code> 和 <code>&gt;</code> 字符，<code>strip_tags()</code> 也就不是一个好的选择了。</p>
     <p>如果阅读了<a href="#validating-emails">验证邮件地址</a>一节，
       你也许也会考虑使用 <a href="http://php.net/manual/zh/function.filter-var.php">filter_var()</a> 函数。
