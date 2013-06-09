@@ -263,11 +263,12 @@
   <section id="php-tags">
     <h2>PHP 标签</h2>
     <h3>使用 <code>&lt;?php ?&gt;</code> 。</h3>
-    <p>有几种不同的方式用来区分 PHP 程序块：<code>&lt;?php ?&gt;</code>, <code>&lt;?= ?&gt;</code>, <code>&lt;? ?&gt;</code>, 以及<code>&lt;%
-      %&gt;</code>。对于打字来说，更短的标签更方便些，但唯一一种在所有 PHP 服务器上都一定能工作的标签是<code>&lt;?php ?&gt;</code>。
+    <p>有几种不同的方式用来区分 PHP 程序块：<code>&lt;?php ?&gt;</code>, <code>&lt;?= ?&gt;</code>, <code>&lt;? ?&gt;</code>, 以及<code>&lt;% %&gt;</code>。
+      对于打字来说，更短的标签更方便些，但唯一一种在所有 PHP 服务器上都一定能工作的标签是<code>&lt;?php ?&gt;</code>。
       若你计划将你的 PHP 应用部署到一台上面的 PHP 配置你无法控制的服务器上，那么你应始终使用 <code>&lt;?php ?&gt;</code>。</p>
 
-    <p>若你仅仅是为自己编码，也能控制你将使用的 PHP 配置，你可能觉得短标签更方便些。但记住 <code>&lt;? ?&gt;</code>可能会和 XML 声明冲突，并且<code>&lt;? ?&gt;</code>实际上是 ASP 的风格。</p>
+    <p>若你仅仅是为自己编码，也能控制你将使用的 PHP 配置，你可能觉得短标签更方便些。
+      但记住 <code>&lt;? ?&gt;</code>可能会和 XML 声明冲突，并且<code>&lt;? ?&gt;</code>实际上是 ASP 的风格。</p>
     <p>无论你选择哪一种，确保一致。</p>
     <h4>陷阱</h4>
     <ul>
@@ -393,7 +394,7 @@
   </section>
   <section id="opcode-cache">
     <h2>缓存 PHP opcode</h2>
-    <h3>使用 <a href="http://php.net/manual/zh/book.apc.php">APC</h3>
+    <h3>使用 <a href="http://php.net/manual/zh/book.apc.php">APC</a></h3>
     <p>在一个标准的 PHP 环境中，每次访问PHP脚本时，脚本都会被编译然后执行。
       一次又一次地花费时间编译相同的脚本对于大型站点会造成性能问题。</p>
     <p>解决方案是采用一个 opcode 缓存。
