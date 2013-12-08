@@ -403,7 +403,8 @@
     <p>解决方案是采用一个 opcode 缓存。
       opcode 缓存是一个能够记下每个脚本经过编译的版本，这样服务器就不需要浪费时间一次又一次地编译了。
       通常这些 opcode 缓存系统也能智能地检测到一个脚本是否发生改变，因此当你升级 PHP 源码时，并不需要手动清空缓存。</p>
-    <p>有几个 PHP opcode 缓存可用，其中值得关注的有 <a href="http://sourceforge.net/projects/eaccelerator/">eaccelerator</a>， <a href="http://xcache.lighttpd.net/">xcache</a>，以及<a href="http://php.net/manual/zh/book.apc.php">APC</a>。
+    <p>PHP 5.5 内建了一个缓存 <a href="http://php.net/manual/en/book.opcache.php">OPcache</a>。PHP 5.2 - 5.4 下可以作为PECL扩展安装。</p>
+    <p> 此外还有几个PHP opcode 缓存值得关注 <a href="http://sourceforge.net/projects/eaccelerator/">eaccelerator</a>， <a href="http://xcache.lighttpd.net/">xcache</a>，以及<a href="http://php.net/manual/zh/book.apc.php">APC</a>。
       APC 是 PHP 项目官方支持的，最为活跃，也最容易安装。
       它也提供一个可选的类 <a href="http://memcached.org/">memcached</a> 的持久化键-值对存储，因此你应使用它。</p>
     <h4>安装 APC</h4>
