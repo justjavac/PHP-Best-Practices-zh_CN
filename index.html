@@ -598,6 +598,11 @@ restart
       <li><a href="http://php.net/manual/zh/function.filter-var.php">PHP 手册：filter_var()</a></li>
       <li><a href="http://php.net/manual/zh/filter.filters.php">PHP 手册：过滤器的类型</a></li>
     </ul>
+    <h4>注意</h4>
+    <p>邮件地址验证也可以交给前端解决。HTML 5 的 表单即支持验证邮箱地址。只需将<code>input</code>元素的<code>type</code>设为email，就会自动验证用户输入的是否是合法的邮件地址。</p>
+    <pre>&lt;input type="email" name="email"&gt;&lt;/pre&gt;</pre>
+
+</p>
   </section>
   <section id="sanitizing-html">
     <h2>净化 HTML 输入和输出</h2>
